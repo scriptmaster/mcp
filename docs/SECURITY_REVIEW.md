@@ -32,7 +32,7 @@ Results at publication:
 - `gosec` reviewed 12 Go source files and reported zero issues. Seven
   deliberately annotated calls use paths or command arrays that are validated
   earlier by trusted configuration or `workspace.Manager.Resolve`.
-- A redacted secret-pattern scan found no OpenAI key, GitHub token, AWS access
+- A redacted secret-pattern scan found no upstream provider key, GitHub token, AWS access
   key, private key, MCP bearer token, or DevSpectra API secret.
 
 GitHub Actions reruns the first four checks on pushes, pull requests, and every
@@ -67,15 +67,15 @@ Commands and Git:
 - Force push, hard reset, history rewriting, and branch deletion are absent.
 - Push and deploy are separate explicit tools.
 
-OpenAI:
+AI provider:
 
-- The upstream OpenAI key stays server-side and is sent only as a bearer
-  credential to `https://api.openai.com/v1/responses`.
-- Requests set `store: false`, enforce prompt/output/time/rate limits, and do
-  not log prompt text, the upstream key, or client credentials.
+- The selected OpenAI or Gemini key stays server-side and is sent only
+  to the matching fixed HTTPS API endpoint.
+- OpenAI requests set `store: false`; both providers enforce
+  prompt/output/time/rate limits and never log prompt text, provider keys, or client credentials.
 - Upstream error details are not returned to the browser.
-- The model is configurable; the default `gpt-6-luna` supports the Responses
-  API. See the [official model page](https://developers.openai.com/api/docs/models/gpt-6-luna).
+- The provider and model are configurable; defaults are `gpt-6-luna` for
+  OpenAI and `gemini-flash-latest` for Gemini.
 - OpenAI's [authentication guidance](https://developers.openai.com/api/reference/overview#authentication)
   says API keys belong in a server environment or key manager, not browser
   code. This project follows that rule.
@@ -88,14 +88,14 @@ Deployment:
 - The deploy script tests and validates a temporary binary, performs an atomic
   install, restarts systemd, checks service state and HTTPS health, and retains
   a rollback binary until health succeeds.
-- Token rotation now changes only `MCP_TOKEN`; it preserves OpenAI and other
+- Token rotation now changes only `MCP_TOKEN`; it preserves provider and other
   environment entries.
 
 ## Risks the operator must still manage
 
 1. **A valid credential is powerful.** Anyone with the MCP bearer token can use
-   every enabled MCP capability. Anyone with the OpenAI client pair can spend
-   the server's OpenAI budget within configured limits. Rotate credentials
+   every enabled MCP capability. Anyone with the DevSpectra client pair can spend
+   the selected provider budget within configured limits. Rotate credentials
    after suspected exposure.
 2. **Do not embed the shared API secret in a shipped frontend.** Browser users
    can inspect JavaScript, headers, and network requests. The included test page
@@ -111,8 +111,8 @@ Deployment:
    eligible to make browser requests when it also has the client credentials.
    Prefer an exact origin list where practical.
 6. **The in-memory rate limiter is basic.** It is global to one process, resets
-   on restart, and is not a billing quota. Set OpenAI project budgets and usage
-   alerts as a second control.
+   on restart, and is not a billing quota. Set provider project budgets, quotas,
+   and usage alerts as a second control.
 7. **Local hostile-process races are outside the primary threat model.** The
    resolver checks symlinks and public assets use root-scoped APIs, but a
    separate malicious local process with write access to the same repository

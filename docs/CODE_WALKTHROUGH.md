@@ -43,7 +43,7 @@ OpenAI client headers must match.
 
 ## Configuration
 
-### `internal/config/config.go` — 260 lines
+### `internal/config/config.go` — 277 lines
 
 | Lines | Meaning |
 |---:|---|
@@ -51,9 +51,9 @@ OpenAI client headers must match.
 | 14–81 | Defines the YAML structure: server, security, OpenAI, limits, feature switches, workspaces, and allowed operations. |
 | 82–103 | Parses commands as either a simple string or, preferably, a safe argument list. |
 | 104–172 | Loads strict YAML, substitutes environment secrets, validates token length, workspace names/paths, duplicates, and configured operations. |
-| 173–218 | Loads OpenAI secrets from environment variables and applies bounded defaults. |
-| 219–231 | Rejects empty command programs, negative timeouts, and absolute working directories. |
-| 232–260 | Supplies conservative defaults for localhost binding and all size/time/result limits. |
+| 173–234 | Selects OpenAI or Gemini, loads the matching provider key/model variables, rejects unknown providers, and applies bounded prompt defaults. |
+| 235–247 | Rejects empty command programs, negative timeouts, and absolute working directories. |
+| 248–277 | Supplies conservative defaults for localhost binding and all size/time/result limits. |
 
 ## Workspace boundary
 
@@ -153,19 +153,18 @@ runner, 16–28 prove timeout enforcement, and 29–38 prove output truncation.
 
 `internal/git/git_test.go` has 16 lines and tests safe versus unsafe ref names.
 
-## OpenAI client and API
+## AI provider client and API
 
-### `internal/openai/client.go` — 135 lines
+### `internal/openai/client.go` — 258 lines
 
 | Lines | Meaning |
 |---:|---|
-| 1–13 | Imports HTTP, JSON, context, byte, string, and time helpers. |
-| 14–47 | Fixes the official Responses endpoint and defines private client state, public result fields, usage, and sanitized upstream errors. |
-| 48–61 | Builds a timeout-enabled client; tests can substitute a fake endpoint. |
-| 62–135 | Sends model/input with `store: false`, server-side bearer auth, and a request ID; caps response bodies, parses safe errors, extracts output text, and returns usage. |
+| 1–16 | Imports HTTP/JSON helpers and declares fixed OpenAI and Gemini endpoints. |
+| 18–83 | Defines provider-neutral result, usage, and safe error data plus timeout-enabled constructors with test endpoints. |
+| 85–166 | Implements bounded OpenAI Responses calls with `store: false`, bearer authentication, safe errors, text extraction, and usage. |
+| 168–258 | Implements bounded Gemini `generateContent` calls with `X-Goog-Api-Key`, safe errors, candidate text extraction, model/version reporting, and mapped usage. |
 
-`internal/openai/client_test.go` has 58 lines: lines 1–43 verify the outbound
-request and parsed response; lines 44–58 verify safe upstream-error handling.
+`internal/openai/client_test.go` has 101 lines: lines 1–43 verify OpenAI, lines 44–58 verify safe upstream errors, and lines 60–101 verify Gemini authentication, request limits, response parsing, model, provider, and usage.
 
 ### `internal/mcp/openai.go` — 194 lines
 
@@ -185,24 +184,24 @@ and 85–94 verify the strict browser Content Security Policy.
 
 ## MCP HTTP server
 
-### `internal/mcp/server.go` — 687 lines
+### `internal/mcp/server.go` — 691 lines
 
 | Lines | Meaning |
 |---:|---|
 | 1–23 | Imports all small services used by the HTTP/MCP layer. |
 | 24–36 | Declares version/protocol and the exact public download allowlist. |
 | 37–75 | Defines server state, JSON-RPC request/response/error records, and MCP tool metadata. |
-| 76–87 | Constructs workspace, file, search, command, Git, auth, OpenAI, and rate-limit services from validated config. |
-| 88–103 | Registers exact routes; unknown paths are not treated as the homepage. |
-| 104–118 | Adds browser security headers and a stricter script policy outside the test page. |
-| 119–177 | Serves the homepage, root-scoped static assets, allowlisted downloads, and nonsensitive health JSON. |
-| 178–231 | Enforces origin, method, body size, strict JSON-RPC shape, protocol headers, and handles initialize/ping/tool discovery. |
-| 232–265 | Validates a tool call, dispatches it, logs only metadata, and returns bounded command details. |
-| 266–524 | Implements every tool's small input schema, feature flag, validation, and call to the appropriate service. |
-| 525–565 | Selects configured or safely detected build/test operations and rejects disabled command categories. |
-| 566–644 | Writes JSON/RPC responses, checks origins/protocol headers, negotiates supported MCP revisions, and extracts safe log metadata. |
-| 645–681 | Publishes the complete list of composable MCP tools and their JSON input schemas. |
-| 682–687 | Resolves the default homepage path relative to the executable. |
+| 76–91 | Constructs workspace, file, search, command, Git, auth, the selected OpenAI/Gemini provider, and rate-limit services from validated config. |
+| 92–107 | Registers exact routes; unknown paths are not treated as the homepage. |
+| 108–122 | Adds browser security headers and a stricter script policy outside the test page. |
+| 123–181 | Serves the homepage, root-scoped static assets, allowlisted downloads, and nonsensitive health JSON. |
+| 182–235 | Enforces origin, method, body size, strict JSON-RPC shape, protocol headers, and handles initialize/ping/tool discovery. |
+| 236–269 | Validates a tool call, dispatches it, logs only metadata, and returns bounded command details. |
+| 270–528 | Implements every tool’s small input schema, feature flag, validation, and call to the appropriate service. |
+| 529–569 | Selects configured or safely detected build/test operations and rejects disabled command categories. |
+| 570–648 | Writes JSON/RPC responses, checks origins/protocol headers, negotiates supported MCP revisions, and extracts safe log metadata. |
+| 649–685 | Publishes the complete list of composable MCP tools and their JSON input schemas. |
+| 686–691 | Resolves the default homepage path relative to the executable. |
 
 `internal/mcp/server_test.go` has 95 lines: lines 1–30 build a test server,
 31–60 test download allowlisting and exact routing, 61–79 test unauthorized

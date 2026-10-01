@@ -21,7 +21,7 @@ import (
 	"mcpdev/internal/workspace"
 )
 
-const Version = "1.1.1"
+const Version = "1.2.0"
 const LatestProtocol = "2026-07-28"
 
 var downloadableFiles = map[string]struct{}{
@@ -78,7 +78,11 @@ func New(c *config.Config, logger *slog.Logger) *Server {
 	runner := &command.Runner{Workspaces: ws, MaxOutput: c.Limits.MaxOutputBytes, DefaultTimeout: time.Duration(c.Limits.CommandTimeout) * time.Second}
 	s := &Server{cfg: c, auth: auth.New(c.Security.Token), ws: ws, files: &files.Service{Workspaces: ws, MaxRead: c.Limits.MaxReadBytes, MaxWrite: c.Limits.MaxWriteBytes}, search: &search.Service{Workspaces: ws, MaxResults: c.Limits.MaxSearchResult}, runner: runner, git: &gitservice.Service{Workspaces: ws, Runner: runner}, started: time.Now(), logger: logger}
 	if c.OpenAI.Enabled {
-		s.openAI = openaiservice.New(c.OpenAI.APIKey, c.OpenAI.Model, c.OpenAI.MaxOutputTokens, time.Duration(c.OpenAI.TimeoutSeconds)*time.Second)
+		if c.OpenAI.Provider == "gemini" {
+			s.openAI = openaiservice.NewGemini(c.OpenAI.APIKey, c.OpenAI.Model, c.OpenAI.MaxOutputTokens, time.Duration(c.OpenAI.TimeoutSeconds)*time.Second)
+		} else {
+			s.openAI = openaiservice.New(c.OpenAI.APIKey, c.OpenAI.Model, c.OpenAI.MaxOutputTokens, time.Duration(c.OpenAI.TimeoutSeconds)*time.Second)
+		}
 		s.openAIAuth = auth.NewHeaderPair(c.OpenAI.ClientKey, c.OpenAI.ClientSecret)
 		s.openAILimiter = newRequestLimiter(c.OpenAI.RequestsPerMinute)
 	}

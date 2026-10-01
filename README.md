@@ -12,25 +12,25 @@ A production Go MCP server that gives an authenticated AI client bounded tools f
   <img alt="Go 1.26.8" src="https://img.shields.io/badge/Go-1.26.8-00ADD8?logo=go&logoColor=white">
   <img alt="MCP Streamable HTTP" src="https://img.shields.io/badge/MCP-Streamable_HTTP-7C3AED">
   <img alt="HTTPS live" src="https://img.shields.io/badge/HTTPS-Live-16A34A">
-  <img alt="Version 1.1.1" src="https://img.shields.io/badge/version-1.1.1-2563EB">
+  <img alt="Version 1.2.0" src="https://img.shields.io/badge/version-1.2.0-2563EB">
 </p>
 
 <p align="center">
   <a href="https://mcp.ai.msheriff.com/"><strong>Live homepage</strong></a> ·
   <a href="https://mcp.ai.msheriff.com/health">Health JSON</a> ·
-  <a href="https://mcp.ai.msheriff.com/openai/test">OpenAI test console</a> ·
+  <a href="https://mcp.ai.msheriff.com/openai/test">AI test console</a> ·
   <a href="docs/SECURITY_REVIEW.md">Security review</a>
 </p>
 
 <p align="center">
   <a href="https://mcp.ai.msheriff.com/"><img src="docs/images/homepage.png" width="49%" alt="Remote Development MCP Server live homepage"></a>
-  <a href="https://mcp.ai.msheriff.com/openai/test"><img src="docs/images/openai-test.png" width="49%" alt="Authenticated OpenAI prompt test console"></a>
+  <a href="https://mcp.ai.msheriff.com/openai/test"><img src="docs/images/openai-test.png" width="49%" alt="Authenticated AI prompt test console"></a>
 </p>
 
 > [!IMPORTANT]
 > The pages above are public documentation and a credential-empty test form.
 > Repository tools and `POST /openai/prompt` remain authenticated. No bearer
-> token, OpenAI key, private repository, certificate key, or API secret is
+> token, upstream provider key, private repository, certificate key, or API secret is
 > stored in this public repository or visible in either screenshot.
 
 ## Why this project is trustworthy
@@ -43,7 +43,7 @@ A production Go MCP server that gives an authenticated AI client bounded tools f
 | Go 1.26.8 | The release is built with the patched toolchain verified by `govulncheck`. |
 | Dedicated Linux user | Production runs as unprivileged `mcp`, not root, with extensive systemd hardening. |
 | Bounded tools | There is no arbitrary shell-string endpoint; paths, command names, sizes, output, and timeouts are constrained. |
-| Server-side OpenAI key | The upstream key stays in a root-owned environment file and is never sent to browser code or written to logs. |
+| Server-side provider key | The OpenAI or Gemini key stays in a root-owned environment file and is never sent to browser code or written to logs. |
 | Reproducible deployment | Tests, build, atomic installation, systemd restart, HTTPS health check, and rollback are automated. |
 
 The latest publication checks passed: all Go tests and race checks, `go vet`,
@@ -56,7 +56,7 @@ comparison, and an HTTPS production health check.
 This repository is the readable source for the service running at
 `mcp.ai.msheriff.com`. In plain English, it lets an authorized AI assistant
 look at selected code folders, make controlled changes, run tests, use Git, and
-request a deployment. It also includes a small authenticated OpenAI prompt API.
+request a deployment. It also includes a small authenticated provider-configurable AI prompt API.
 
 If you are new to Go, read these in order:
 
@@ -75,7 +75,7 @@ toolbox for selected source-code folders. The client can discover relevant
 files without loading an entire repository, make targeted changes, review the
 diff, run builds/tests, and perform separately authorized Git or deployment
 operations. A second authenticated endpoint provides a small server-side
-OpenAI Responses API bridge for frontends that cannot call OpenAI directly.
+AI provider bridge for frontends that cannot call OpenAI directly.
 
 Clone it with:
 
@@ -86,14 +86,14 @@ go test ./...
 ```
 
 Compiled binaries and real secrets are deliberately not stored in GitHub.
-The GitHub repository is public, but the running MCP and OpenAI endpoints remain
+The GitHub repository is public, but the running MCP and AI endpoints remain
 authenticated.
 
 Repository summary:
 
 - **45 tracked files:** 43 readable source/configuration/documentation files
   plus 2 real website screenshots.
-- **4,973 readable lines** at this revision.
+- **5,162 readable lines** at this revision.
 - Every executable Go, JavaScript, shell, build, service, proxy, and CI line is
   explained below by continuous line ranges.
 - Compiled binaries and real secrets are deliberately excluded from Git.
@@ -103,8 +103,8 @@ Production URLs:
 - Homepage/operator manual: `https://mcp.ai.msheriff.com/`
 - Health: `https://mcp.ai.msheriff.com/health`
 - MCP: `https://mcp.ai.msheriff.com/mcp`
-- OpenAI prompt API: `https://mcp.ai.msheriff.com/openai/prompt`
-- OpenAI browser test: `https://mcp.ai.msheriff.com/openai/test`
+- AI prompt API: `https://mcp.ai.msheriff.com/openai/prompt`
+- AI browser test: `https://mcp.ai.msheriff.com/openai/test`
 
 ## Architecture
 
@@ -149,7 +149,7 @@ The choice follows the current [MCP Streamable HTTP specification](https://model
 - Git force push, hard reset, branch deletion, and history rewriting are not implemented. Pull is fast-forward only. Push and deploy are separate explicit calls.
 - The systemd service uses a dedicated `mcp` user, no capabilities, `NoNewPrivileges`, filesystem protection, private temporary storage, restricted address families, and inaccessible `/root`, SSH, certificate, and shadow paths.
 - Browser `Origin` values are allowlisted; server-to-server requests without `Origin` are accepted.
-- `POST /openai/prompt` has separate `X-API-Key` and `X-API-Secret` authentication, a request-size limit, an output-token limit, a timeout, and a per-minute request limit. The upstream OpenAI key remains server-side and is never returned or logged.
+- `POST /openai/prompt` has separate `X-API-Key` and `X-API-Secret` authentication, a request-size limit, an output-token limit, a timeout, and a per-minute request limit. The selected OpenAI or Gemini key remains server-side and is never returned or logged.
 
 This is a powerful repository automation service. Configure only repositories you intend an AI client to access, use a dedicated OS user, keep high-impact ChatGPT actions approval-gated, and audit `journalctl -u mcp`.
 
@@ -166,7 +166,8 @@ security:
   token: "FROM_ENVIRONMENT"
 openai:
   enabled: true
-  model: "gpt-6-luna"
+  provider: "openai" # or "gemini"
+  model: "gpt-6-luna" # use "gemini-flash-latest" with Gemini
   api_key: "FROM_ENVIRONMENT"
   client_key: "FROM_ENVIRONMENT"
   client_secret: "FROM_ENVIRONMENT"
@@ -206,15 +207,15 @@ workspaces:
 
 Command lists execute directly without a shell. A simple scalar such as `./deploy.sh` is also accepted and split into argv; use a YAML list for arguments or values containing spaces. A workspace can be disabled with `enabled: false` or made inspection-only with `read_only: true`.
 
-## OpenAI prompt API
+## AI prompt API
 
-`POST /openai/prompt` validates the DevSpectra client headers and sends only the supplied prompt to OpenAI's Responses API. It accepts:
+`POST /openai/prompt` validates the DevSpectra client headers and sends only the supplied prompt to the configured OpenAI or Gemini provider. It accepts:
 
 ```json
-{"prompt":"Reply with exactly: MCP OpenAI integration OK"}
+{"prompt":"Reply with exactly: MCP AI integration OK"}
 ```
 
-Required headers are `Content-Type: application/json`, `X-API-Key`, and `X-API-Secret`. Successful responses contain `response_id`, `model`, `text`, `request_id`, `usage`, and `duration_ms`. The API secret and upstream OpenAI key are loaded only from `/etc/mcp/mcp.env`; neither is committed to source or shown on the public documentation page.
+Required headers are `Content-Type: application/json`, `X-API-Key`, and `X-API-Secret`. Successful responses contain `response_id`, `provider`, `model`, `text`, `request_id`, `usage`, and `duration_ms`. The API secret and selected upstream provider key are loaded only from `/etc/mcp/mcp.env`; neither is committed to source or shown on the public documentation page.
 
 The manual browser client at `GET /openai/test` keeps entered credentials in page memory only. It is suitable for an owner test. A production browser bundle must not embed the shared secret because end users can extract browser-delivered credentials; DevSpectra should call `POST /openai/prompt` from its own backend whenever possible.
 
@@ -266,7 +267,7 @@ Detection never runs package installation, CMake configuration, clean targets, o
 ## Repository size and every line explained
 
 This revision contains **45 tracked files**: **43 readable text files** and
-**2 PNG screenshots**, with **4,973 readable lines** in total.
+**2 PNG screenshots**, with **5,162 readable lines** in total.
 The counts below use the checked-in files, not generated binaries.
 
 “Every line explained” means every executable or configuration file is divided
@@ -284,11 +285,11 @@ while still leaving no source-code section unexplained.
 | `.github/workflows/ci.yml` | 36 | Tests, race detector, vet, vulnerability scan, and security scan. |
 | `.gitignore` | 15 | Prevents binaries, secrets, keys, and temporary output from entering Git. |
 | `Makefile` | 36 | Builds six operating-system/CPU binaries and SHA-256 checksums. |
-| `README.md` | 868 | The complete public landing page and operator/developer guide. |
+| `README.md` | 869 | The complete public landing page and operator/developer guide. |
 | `SECURITY.md` | 22 | Private vulnerability-reporting and operator-security policy. |
 | `cmd/server/main.go` | 61 | Program startup, logging, HTTP lifecycle, and graceful shutdown. |
-| `config.example.yaml` | 69 | Commented, secret-free configuration template. |
-| `docs/CODE_WALKTHROUGH.md` | 245 | Standalone copy of the beginner code guide. |
+| `config.example.yaml` | 71 | Commented, secret-free configuration template. |
+| `docs/CODE_WALKTHROUGH.md` | 244 | Standalone copy of the beginner code guide. |
 | `docs/SECURITY_REVIEW.md` | 126 | Audit evidence, protections, limitations, and residual risks. |
 | `docs/certbot.example.sh` | 8 | Minimal safe certificate-command example. |
 | `docs/images/homepage.png` | binary | Real 1440×1000 live-homepage screenshot. |
@@ -303,17 +304,17 @@ while still leaving no source-code section unexplained.
 | `internal/command/command_test.go` | 38 | Timeout and output-limit tests. |
 | `internal/command/process_unix.go` | 16 | Unix process-group setup and termination. |
 | `internal/command/process_windows.go` | 11 | Windows process termination implementation. |
-| `internal/config/config.go` | 260 | Strict YAML parsing, defaults, environment secrets, and validation. |
+| `internal/config/config.go` | 277 | Strict YAML parsing, defaults, environment secrets, and validation. |
 | `internal/files/files.go` | 285 | Safe partial reads, guarded writes, patches, deletes, hashes, and diffs. |
 | `internal/files/files_test.go` | 49 | Line-range and unique-patch tests. |
 | `internal/git/git.go` | 140 | Separate bounded Git operations without force/history rewriting. |
 | `internal/git/git_test.go` | 16 | Safe/unsafe Git reference tests. |
 | `internal/mcp/openai.go` | 194 | Authenticated `POST /openai/prompt`, CORS, limits, and safe logging. |
 | `internal/mcp/openai_test.go` | 94 | OpenAI endpoint authentication, CORS, response, and CSP tests. |
-| `internal/mcp/server.go` | 687 | HTTP routes, JSON-RPC/MCP handling, dispatch, and tool schemas. |
+| `internal/mcp/server.go` | 691 | HTTP routes, JSON-RPC/MCP handling, dispatch, and tool schemas. |
 | `internal/mcp/server_test.go` | 95 | Route, download, authentication, initialize, and discovery tests. |
-| `internal/openai/client.go` | 135 | Bounded server-to-server OpenAI Responses API client. |
-| `internal/openai/client_test.go` | 58 | Outbound request, response, and safe error tests. |
+| `internal/openai/client.go` | 258 | Bounded server-to-server OpenAI and Gemini API client. |
+| `internal/openai/client_test.go` | 101 | OpenAI/Gemini outbound request, response, and safe error tests. |
 | `internal/search/search.go` | 324 | Tree, filename, ripgrep, and root-scoped fallback search. |
 | `internal/search/search_test.go` | 22 | Search-result-limit test. |
 | `internal/workspace/workspace.go` | 147 | Workspace allowlist, path validation, symlink checks, and protected names. |
@@ -323,7 +324,7 @@ while still leaving no source-code section unexplained.
 | `scripts/mcp-token` | 52 | Root-only token retrieval and safe rotation. |
 | `web/index.html` | 200 | Public homepage and complete operator manual. |
 | `web/launch-banner.svg` | 21 | Accessible vector launch banner. |
-| `web/openai-test.html` | 34 | Credential-empty manual OpenAI test form. |
+| `web/openai-test.html` | 34 | Credential-empty manual AI test form. |
 | `web/openai-test.js` | 37 | In-memory test request and response display. |
 
 </details>
@@ -368,7 +369,7 @@ lines 31–51 prove both OpenAI client headers must match.
 
 ### Configuration
 
-#### `internal/config/config.go` — 260 lines
+#### `internal/config/config.go` — 277 lines
 
 | Lines | Meaning |
 |---:|---|
@@ -376,20 +377,20 @@ lines 31–51 prove both OpenAI client headers must match.
 | 14–81 | Defines every YAML section: server, security, OpenAI, limits, tool switches, workspaces, and operations. |
 | 82–103 | Parses a command as a simple string or, preferably, an explicit argument list. |
 | 104–172 | Loads strict YAML, substitutes environment secrets, checks token length, validates workspace names/paths, rejects duplicates, and validates operations. |
-| 173–218 | Loads OpenAI settings from environment variables and supplies bounded defaults. |
-| 219–231 | Rejects an empty executable, negative timeout, or absolute command working directory. |
-| 232–260 | Supplies localhost and conservative request/read/write/output/search/timeout defaults. |
+| 173–234 | Selects OpenAI or Gemini, loads the matching key/model variables, rejects unknown providers, and supplies bounded prompt defaults. |
+| 235–247 | Rejects an empty executable, negative timeout, or absolute command working directory. |
+| 248–277 | Supplies localhost and conservative request/read/write/output/search/timeout defaults. |
 
-#### `config.example.yaml` — 69 lines
+#### `config.example.yaml` — 71 lines
 
 | Lines | Meaning |
 |---:|---|
 | 1–11 | Private localhost listener, public URL, homepage, and allowed MCP browser origins. |
 | 12–15 | MCP token placeholder; the real token comes from the protected environment file. |
-| 16–32 | Optional OpenAI model, environment-secret placeholders, browser origins, and prompt/output/time/rate limits. |
-| 33–41 | Global request, file, output, search, and command bounds. |
-| 42–49 | Administrator switches for build, test, Git, deploy, and named commands. |
-| 50–69 | One example workspace, protected path, safe build/test argv, and one named format check. |
+| 16–34 | Optional OpenAI/Gemini provider and model, environment-secret placeholders, browser origins, and prompt/output/time/rate limits. |
+| 35–43 | Global request, file, output, search, and command bounds. |
+| 44–51 | Administrator switches for build, test, Git, deploy, and named commands. |
+| 52–71 | One example workspace, protected path, safe build/test argv, and one named format check. |
 
 ### Workspace boundary
 
@@ -485,19 +486,19 @@ imports; 10–13 start a separate process group; 14–16 terminate that whole gr
 
 `internal/git/git_test.go` lines 1–16 test allowed and rejected references.
 
-### OpenAI bridge
+### AI provider bridge
 
-#### `internal/openai/client.go` — 135 lines
+#### `internal/openai/client.go` — 258 lines
 
 | Lines | Meaning |
 |---:|---|
-| 1–13 | Imports HTTP, JSON, context, bytes, strings, and time helpers. |
-| 14–47 | Fixes the official Responses endpoint and defines private client state, result/usage fields, and sanitized upstream errors. |
-| 48–61 | Creates a timeout-enabled client; tests may substitute a fake endpoint. |
-| 62–135 | Sends model/input with `store: false`, bearer auth, and a request ID; caps response bodies, parses safe errors, extracts output text, and returns usage. |
+| 1–16 | Imports HTTP/JSON helpers and declares the fixed OpenAI and Gemini endpoints. |
+| 18–83 | Defines provider-neutral result, usage, and safe error data, plus timeout-enabled OpenAI/Gemini constructors with test endpoints. |
+| 85–166 | Selects the provider and implements bounded OpenAI Responses requests with `store: false`, bearer authentication, safe errors, text extraction, and usage. |
+| 168–258 | Implements bounded Gemini `generateContent` requests with `X-Goog-Api-Key`, safe errors, candidate text extraction, model/version reporting, and mapped usage. |
 
-`internal/openai/client_test.go`: lines 1–43 verify the request and parsed
-response; 44–58 verify sanitized upstream error handling.
+`internal/openai/client_test.go`: lines 1–43 verify the OpenAI request and parsed
+response; 44–58 verify sanitized upstream errors; 60–101 verify Gemini authentication, request limits, response text, model, provider, and usage.
 
 #### `internal/mcp/openai.go` — 194 lines
 
@@ -516,24 +517,24 @@ authentication/response; 64–84 test CORS; 85–94 verify strict CSP.
 
 ### MCP and HTTP server
 
-#### `internal/mcp/server.go` — 687 lines
+#### `internal/mcp/server.go` — 691 lines
 
 | Lines | Meaning |
 |---:|---|
 | 1–23 | Imports all smaller services used by the HTTP/MCP layer. |
 | 24–36 | Declares release/protocol versions and the exact public download allowlist. |
 | 37–75 | Defines server state, JSON-RPC records, errors, and MCP tool metadata. |
-| 76–87 | Constructs workspace, file, search, command, Git, auth, OpenAI, and limiter services from validated config. |
-| 88–103 | Registers exact routes so unknown paths never fall back to the homepage. |
-| 104–118 | Adds browser security headers and permits script only on the test page. |
-| 119–177 | Serves the homepage, root-scoped assets, allowlisted downloads, and nonsensitive health JSON. |
-| 178–231 | Enforces origin/method/body/JSON-RPC/protocol rules and handles initialize, ping, and discovery. |
-| 232–265 | Validates a tool call, dispatches it, logs metadata only, and returns bounded command details. |
-| 266–524 | Implements every tool's small input record, feature switch, validation, and service call. |
-| 525–565 | Selects configured or safely detected build/test operations and rejects disabled categories. |
-| 566–644 | Writes responses, validates protocol headers/origins, negotiates MCP versions, and extracts safe log metadata. |
-| 645–681 | Publishes all composable tools and their JSON schemas. |
-| 682–687 | Finds the default homepage relative to the executable. |
+| 76–91 | Constructs workspace, file, search, command, Git, auth, selected OpenAI/Gemini provider, and limiter services from validated config. |
+| 92–107 | Registers exact routes so unknown paths never fall back to the homepage. |
+| 108–122 | Adds browser security headers and permits script only on the test page. |
+| 123–181 | Serves the homepage, root-scoped assets, allowlisted downloads, and nonsensitive health JSON. |
+| 182–235 | Enforces origin/method/body/JSON-RPC/protocol rules and handles initialize, ping, and discovery. |
+| 236–269 | Validates a tool call, dispatches it, logs metadata only, and returns bounded command details. |
+| 270–528 | Implements every tool’s small input record, feature switch, validation, and service call. |
+| 529–569 | Selects configured or safely detected build/test operations and rejects disabled categories. |
+| 570–648 | Writes responses, validates protocol headers/origins, negotiates MCP versions, and extracts safe log metadata. |
+| 649–685 | Publishes all composable tools and their JSON schemas. |
+| 686–691 | Finds the default homepage relative to the executable. |
 
 `internal/mcp/server_test.go`: lines 1–30 build a test server; 31–60 test
 download allowlisting/exact routing; 61–79 test unauthorized access; 80–95 test
@@ -748,7 +749,7 @@ sudo /var/www/mcp/scripts/mcp-token rotate
 ```
 
 Rotation changes only `MCP_TOKEN`, preserves unrelated settings such as
-`OPENAI_API_KEY`, and restarts the service. Update clients after rotation.
+`OPENAI_API_KEY` and `GEMINI_API_KEY`, and restarts the service. Update clients after rotation.
 Never paste the token into the public homepage, a repository file, a URL/query
 string, a ticket, or logs.
 

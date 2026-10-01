@@ -7,13 +7,16 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 )
 
 const responsesEndpoint = "https://api.openai.com/v1/responses"
+const geminiEndpoint = "https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent"
 
 type Client struct {
+	provider        string
 	apiKey          string
 	model           string
 	maxOutputTokens int64
@@ -29,6 +32,7 @@ type Usage struct {
 
 type Result struct {
 	ID        string `json:"response_id"`
+	Provider  string `json:"provider"`
 	Model     string `json:"model"`
 	Text      string `json:"text"`
 	RequestID string `json:"request_id,omitempty"`
@@ -36,21 +40,40 @@ type Result struct {
 }
 
 type APIError struct {
+	Provider   string
 	StatusCode int
 	Message    string
 	RequestID  string
 }
 
 func (e *APIError) Error() string {
-	return fmt.Sprintf("OpenAI returned HTTP %d: %s", e.StatusCode, e.Message)
+	provider := e.Provider
+	if provider == "" {
+		provider = "OpenAI"
+	}
+	return fmt.Sprintf("%s returned HTTP %d: %s", provider, e.StatusCode, e.Message)
 }
 
 func New(apiKey, model string, maxOutputTokens int64, timeout time.Duration) *Client {
-	return NewWithEndpoint(apiKey, model, maxOutputTokens, timeout, responsesEndpoint)
+	return newClient("openai", apiKey, model, maxOutputTokens, timeout, responsesEndpoint)
 }
 
 func NewWithEndpoint(apiKey, model string, maxOutputTokens int64, timeout time.Duration, endpoint string) *Client {
+	return newClient("openai", apiKey, model, maxOutputTokens, timeout, endpoint)
+}
+
+func NewGemini(apiKey, model string, maxOutputTokens int64, timeout time.Duration) *Client {
+	endpoint := fmt.Sprintf(geminiEndpoint, url.PathEscape(model))
+	return newClient("gemini", apiKey, model, maxOutputTokens, timeout, endpoint)
+}
+
+func NewGeminiWithEndpoint(apiKey, model string, maxOutputTokens int64, timeout time.Duration, endpoint string) *Client {
+	return newClient("gemini", apiKey, model, maxOutputTokens, timeout, endpoint)
+}
+
+func newClient(provider, apiKey, model string, maxOutputTokens int64, timeout time.Duration, endpoint string) *Client {
 	return &Client{
+		provider:        provider,
 		apiKey:          apiKey,
 		model:           model,
 		maxOutputTokens: maxOutputTokens,
@@ -60,6 +83,13 @@ func NewWithEndpoint(apiKey, model string, maxOutputTokens int64, timeout time.D
 }
 
 func (c *Client) Prompt(ctx context.Context, prompt, clientRequestID string) (*Result, error) {
+	if c.provider == "gemini" {
+		return c.promptGemini(ctx, prompt)
+	}
+	return c.promptOpenAI(ctx, prompt, clientRequestID)
+}
+
+func (c *Client) promptOpenAI(ctx context.Context, prompt, clientRequestID string) (*Result, error) {
 	payload := struct {
 		Model           string `json:"model"`
 		Input           string `json:"input"`
@@ -99,7 +129,7 @@ func (c *Client) Prompt(ctx context.Context, prompt, clientRequestID string) (*R
 		if message == "" {
 			message = http.StatusText(resp.StatusCode)
 		}
-		return nil, &APIError{StatusCode: resp.StatusCode, Message: message, RequestID: requestID}
+		return nil, &APIError{Provider: "OpenAI", StatusCode: resp.StatusCode, Message: message, RequestID: requestID}
 	}
 
 	var apiResponse struct {
@@ -127,9 +157,102 @@ func (c *Client) Prompt(ctx context.Context, prompt, clientRequestID string) (*R
 	}
 	return &Result{
 		ID:        apiResponse.ID,
+		Provider:  "openai",
 		Model:     apiResponse.Model,
 		Text:      strings.Join(textParts, "\n"),
 		RequestID: requestID,
 		Usage:     apiResponse.Usage,
+	}, nil
+}
+
+func (c *Client) promptGemini(ctx context.Context, prompt string) (*Result, error) {
+	type part struct {
+		Text string `json:"text"`
+	}
+	type content struct {
+		Role  string `json:"role"`
+		Parts []part `json:"parts"`
+	}
+	payload := struct {
+		Contents         []content `json:"contents"`
+		GenerationConfig struct {
+			MaxOutputTokens int64 `json:"maxOutputTokens"`
+		} `json:"generationConfig"`
+	}{Contents: []content{{Role: "user", Parts: []part{{Text: prompt}}}}}
+	payload.GenerationConfig.MaxOutputTokens = c.maxOutputTokens
+	body, err := json.Marshal(payload)
+	if err != nil {
+		return nil, fmt.Errorf("encode Gemini request: %w", err)
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.endpoint, bytes.NewReader(body))
+	if err != nil {
+		return nil, fmt.Errorf("create Gemini request: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("X-Goog-Api-Key", c.apiKey)
+	resp, err := c.http.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("call Gemini: %w", err)
+	}
+	defer resp.Body.Close()
+	requestID := resp.Header.Get("X-Request-Id")
+	if requestID == "" {
+		requestID = resp.Header.Get("X-Google-Request-ID")
+	}
+	limited := io.LimitReader(resp.Body, 2<<20)
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		var apiResponse struct {
+			Error struct {
+				Message string `json:"message"`
+			} `json:"error"`
+		}
+		data, _ := io.ReadAll(io.LimitReader(limited, 32<<10))
+		_ = json.Unmarshal(data, &apiResponse)
+		message := strings.TrimSpace(apiResponse.Error.Message)
+		if message == "" {
+			message = http.StatusText(resp.StatusCode)
+		}
+		return nil, &APIError{Provider: "Gemini", StatusCode: resp.StatusCode, Message: message, RequestID: requestID}
+	}
+	var apiResponse struct {
+		ResponseID   string `json:"responseId"`
+		ModelVersion string `json:"modelVersion"`
+		Candidates   []struct {
+			Content struct {
+				Parts []part `json:"parts"`
+			} `json:"content"`
+		} `json:"candidates"`
+		Usage struct {
+			InputTokens  int64 `json:"promptTokenCount"`
+			OutputTokens int64 `json:"candidatesTokenCount"`
+			TotalTokens  int64 `json:"totalTokenCount"`
+		} `json:"usageMetadata"`
+	}
+	if err := json.NewDecoder(limited).Decode(&apiResponse); err != nil {
+		return nil, fmt.Errorf("decode Gemini response: %w", err)
+	}
+	var textParts []string
+	for _, candidate := range apiResponse.Candidates {
+		for _, responsePart := range candidate.Content.Parts {
+			if responsePart.Text != "" {
+				textParts = append(textParts, responsePart.Text)
+			}
+		}
+	}
+	model := apiResponse.ModelVersion
+	if model == "" {
+		model = c.model
+	}
+	return &Result{
+		ID:        apiResponse.ResponseID,
+		Provider:  "gemini",
+		Model:     model,
+		Text:      strings.Join(textParts, "\n"),
+		RequestID: requestID,
+		Usage: Usage{
+			InputTokens:  apiResponse.Usage.InputTokens,
+			OutputTokens: apiResponse.Usage.OutputTokens,
+			TotalTokens:  apiResponse.Usage.TotalTokens,
+		},
 	}, nil
 }

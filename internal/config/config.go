@@ -33,6 +33,7 @@ type SecurityConfig struct {
 
 type OpenAIConfig struct {
 	Enabled           bool     `yaml:"enabled"`
+	Provider          string   `yaml:"provider"`
 	Model             string   `yaml:"model"`
 	APIKey            string   `yaml:"api_key"`
 	ClientKey         string   `yaml:"client_key"`
@@ -180,17 +181,33 @@ func configureOpenAI(c *Config) error {
 		}
 		return current
 	}
-	c.OpenAI.APIKey = fromEnv(c.OpenAI.APIKey, "OPENAI_API_KEY")
+	if provider := strings.TrimSpace(os.Getenv("AI_PROVIDER")); provider != "" {
+		c.OpenAI.Provider = provider
+	}
+	c.OpenAI.Provider = strings.ToLower(strings.TrimSpace(c.OpenAI.Provider))
+	if c.OpenAI.Provider == "" {
+		c.OpenAI.Provider = "openai"
+	}
+	var apiKeyEnv, modelEnv, defaultModel string
+	switch c.OpenAI.Provider {
+	case "openai":
+		apiKeyEnv, modelEnv, defaultModel = "OPENAI_API_KEY", "OPENAI_MODEL", "gpt-6-luna"
+	case "gemini":
+		apiKeyEnv, modelEnv, defaultModel = "GEMINI_API_KEY", "GEMINI_MODEL", "gemini-flash-latest"
+	default:
+		return fmt.Errorf("unsupported prompt provider %q", c.OpenAI.Provider)
+	}
+	c.OpenAI.APIKey = fromEnv(c.OpenAI.APIKey, apiKeyEnv)
 	c.OpenAI.ClientKey = fromEnv(c.OpenAI.ClientKey, "OPENAI_CLIENT_KEY")
 	c.OpenAI.ClientSecret = fromEnv(c.OpenAI.ClientSecret, "OPENAI_CLIENT_SECRET")
-	if model := os.Getenv("OPENAI_MODEL"); model != "" {
+	if model := os.Getenv(modelEnv); model != "" {
 		c.OpenAI.Model = model
 	}
 	if c.OpenAI.Model == "" {
-		c.OpenAI.Model = "gpt-6-luna"
+		c.OpenAI.Model = defaultModel
 	}
 	if c.OpenAI.APIKey == "" {
-		return errors.New("openai api key missing: set OPENAI_API_KEY")
+		return fmt.Errorf("%s api key missing: set %s", c.OpenAI.Provider, apiKeyEnv)
 	}
 	if c.OpenAI.ClientKey == "" {
 		return errors.New("openai client key missing: set OPENAI_CLIENT_KEY")

@@ -144,7 +144,7 @@ func (s *Server) handleOpenAIPrompt(w http.ResponseWriter, r *http.Request) {
 		} else if errors.Is(err, context.DeadlineExceeded) || errors.Is(err, r.Context().Err()) {
 			status = http.StatusGatewayTimeout
 		}
-		writeJSON(w, status, map[string]string{"error": "OpenAI request failed"})
+		writeJSON(w, status, map[string]string{"error": "AI request failed"})
 		s.logOpenAIPrompt(r, started, status, false)
 		return
 	}

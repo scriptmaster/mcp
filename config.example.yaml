@@ -15,9 +15,11 @@ security:
 
 openai:
   # Set false if you do not want POST /openai/prompt.
+  # Provider may be "openai" or "gemini"; the public endpoint stays stable.
   enabled: true
+  provider: "openai"
   model: "gpt-6-luna"
-  # All three real values come from environment variables.
+  # Provider key uses OPENAI_API_KEY or GEMINI_API_KEY. Client credentials stay unchanged.
   api_key: "FROM_ENVIRONMENT"
   client_key: "FROM_ENVIRONMENT"
   client_secret: "FROM_ENVIRONMENT"

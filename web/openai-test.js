@@ -10,7 +10,7 @@
     send.disabled = true;
     status.className = "meta";
     status.textContent = "Calling POST /openai/prompt…";
-    output.textContent = "Waiting for OpenAI…";
+    output.textContent = "Waiting for the AI provider…";
     const started = performance.now();
     try {
       const response = await fetch("/openai/prompt", {
@@ -24,8 +24,8 @@
       });
       const data = await response.json().catch(() => ({error: "The server returned non-JSON data."}));
       if (!response.ok) throw new Error(data.error || `HTTP ${response.status}`);
-      output.textContent = data.text || "(OpenAI returned an empty text output.)";
-      status.textContent = `Success · ${data.model} · ${data.usage?.total_tokens ?? 0} tokens · ${Math.round(performance.now()-started)} ms browser round-trip`;
+      output.textContent = data.text || "(The AI provider returned an empty text output.)";
+      status.textContent = `Success · ${data.provider || "AI"} · ${data.model} · ${data.usage?.total_tokens ?? 0} tokens · ${Math.round(performance.now()-started)} ms browser round-trip`;
     } catch (error) {
       status.className = "meta error";
       status.textContent = `Failed: ${error.message}`;
