@@ -99,7 +99,8 @@ Deployment:
    after suspected exposure.
 2. **Do not embed the shared API secret in a shipped frontend.** Browser users
    can inspect JavaScript, headers, and network requests. The included test page
-   is for an owner entering credentials manually; production frontends should
+   stores credentials in that browser’s local storage after a successful request
+   and is only for an owner on a trusted device. Production frontends should
    call their own backend, which then calls `POST /openai/prompt`.
 3. **Configured commands are trusted code.** A dangerous build or deploy
    command can bypass application-level intent. Only root should edit the

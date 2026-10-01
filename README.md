@@ -12,19 +12,19 @@ A production Go MCP server that gives an authenticated AI client bounded tools f
   <img alt="Go 1.26.8" src="https://img.shields.io/badge/Go-1.26.8-00ADD8?logo=go&logoColor=white">
   <img alt="MCP Streamable HTTP" src="https://img.shields.io/badge/MCP-Streamable_HTTP-7C3AED">
   <img alt="HTTPS live" src="https://img.shields.io/badge/HTTPS-Live-16A34A">
-  <img alt="Version 1.2.0" src="https://img.shields.io/badge/version-1.2.0-2563EB">
+  <img alt="Version 1.2.1" src="https://img.shields.io/badge/version-1.2.1-2563EB">
 </p>
 
 <p align="center">
   <a href="https://mcp.ai.msheriff.com/"><strong>Live homepage</strong></a> ·
   <a href="https://mcp.ai.msheriff.com/health">Health JSON</a> ·
-  <a href="https://mcp.ai.msheriff.com/openai/test">AI test console</a> ·
+  <a href="https://mcp.ai.msheriff.com/test">AI test console</a> ·
   <a href="docs/SECURITY_REVIEW.md">Security review</a>
 </p>
 
 <p align="center">
   <a href="https://mcp.ai.msheriff.com/"><img src="docs/images/homepage.png" width="49%" alt="Remote Development MCP Server live homepage"></a>
-  <a href="https://mcp.ai.msheriff.com/openai/test"><img src="docs/images/openai-test.png" width="49%" alt="Authenticated AI prompt test console"></a>
+  <a href="https://mcp.ai.msheriff.com/test"><img src="docs/images/openai-test.png" width="49%" alt="Authenticated AI prompt test console"></a>
 </p>
 
 > [!IMPORTANT]
@@ -93,7 +93,7 @@ Repository summary:
 
 - **45 tracked files:** 43 readable source/configuration/documentation files
   plus 2 real website screenshots.
-- **5,162 readable lines** at this revision.
+- **5,246 readable lines** at this revision.
 - Every executable Go, JavaScript, shell, build, service, proxy, and CI line is
   explained below by continuous line ranges.
 - Compiled binaries and real secrets are deliberately excluded from Git.
@@ -104,7 +104,7 @@ Production URLs:
 - Health: `https://mcp.ai.msheriff.com/health`
 - MCP: `https://mcp.ai.msheriff.com/mcp`
 - AI prompt API: `https://mcp.ai.msheriff.com/openai/prompt`
-- AI browser test: `https://mcp.ai.msheriff.com/openai/test`
+- AI browser test: `https://mcp.ai.msheriff.com/test`
 
 ## Architecture
 
@@ -217,7 +217,7 @@ Command lists execute directly without a shell. A simple scalar such as `./deplo
 
 Required headers are `Content-Type: application/json`, `X-API-Key`, and `X-API-Secret`. Successful responses contain `response_id`, `provider`, `model`, `text`, `request_id`, `usage`, and `duration_ms`. The API secret and selected upstream provider key are loaded only from `/etc/mcp/mcp.env`; neither is committed to source or shown on the public documentation page.
 
-The manual browser client at `GET /openai/test` keeps entered credentials in page memory only. It is suitable for an owner test. A production browser bundle must not embed the shared secret because end users can extract browser-delivered credentials; DevSpectra should call `POST /openai/prompt` from its own backend whenever possible.
+The manual browser client at `GET /test` stores both entered credentials in that browser’s local storage after a successful request. It provides a clear button and is suitable only for an owner on a trusted device. `GET /openai/test` permanently redirects to `/test`, while `/test/` remains unmatched. A production browser bundle must not embed the shared secret because end users can extract browser-delivered credentials; DevSpectra should call `POST /openai/prompt` from its own backend whenever possible.
 
 When adding a repository, grant the `mcp` OS user only the required access and add the repository to `ReadWritePaths=` in the systemd unit. Then run:
 
@@ -267,7 +267,7 @@ Detection never runs package installation, CMake configuration, clean targets, o
 ## Repository size and every line explained
 
 This revision contains **45 tracked files**: **43 readable text files** and
-**2 PNG screenshots**, with **5,162 readable lines** in total.
+**2 PNG screenshots**, with **5,246 readable lines** in total.
 The counts below use the checked-in files, not generated binaries.
 
 “Every line explained” means every executable or configuration file is divided
@@ -285,12 +285,12 @@ while still leaving no source-code section unexplained.
 | `.github/workflows/ci.yml` | 36 | Tests, race detector, vet, vulnerability scan, and security scan. |
 | `.gitignore` | 15 | Prevents binaries, secrets, keys, and temporary output from entering Git. |
 | `Makefile` | 36 | Builds six operating-system/CPU binaries and SHA-256 checksums. |
-| `README.md` | 869 | The complete public landing page and operator/developer guide. |
+| `README.md` | 870 | The complete public landing page and operator/developer guide. |
 | `SECURITY.md` | 22 | Private vulnerability-reporting and operator-security policy. |
 | `cmd/server/main.go` | 61 | Program startup, logging, HTTP lifecycle, and graceful shutdown. |
 | `config.example.yaml` | 71 | Commented, secret-free configuration template. |
 | `docs/CODE_WALKTHROUGH.md` | 244 | Standalone copy of the beginner code guide. |
-| `docs/SECURITY_REVIEW.md` | 126 | Audit evidence, protections, limitations, and residual risks. |
+| `docs/SECURITY_REVIEW.md` | 127 | Audit evidence, protections, limitations, and residual risks. |
 | `docs/certbot.example.sh` | 8 | Minimal safe certificate-command example. |
 | `docs/images/homepage.png` | binary | Real 1440×1000 live-homepage screenshot. |
 | `docs/images/openai-test.png` | binary | Real 1440×1000 credential-empty test-page screenshot. |
@@ -309,9 +309,9 @@ while still leaving no source-code section unexplained.
 | `internal/files/files_test.go` | 49 | Line-range and unique-patch tests. |
 | `internal/git/git.go` | 140 | Separate bounded Git operations without force/history rewriting. |
 | `internal/git/git_test.go` | 16 | Safe/unsafe Git reference tests. |
-| `internal/mcp/openai.go` | 194 | Authenticated `POST /openai/prompt`, CORS, limits, and safe logging. |
-| `internal/mcp/openai_test.go` | 94 | OpenAI endpoint authentication, CORS, response, and CSP tests. |
-| `internal/mcp/server.go` | 691 | HTTP routes, JSON-RPC/MCP handling, dispatch, and tool schemas. |
+| `internal/mcp/openai.go` | 199 | Authenticated prompt API, test-page routes, CORS, limits, and safe logging. |
+| `internal/mcp/openai_test.go` | 108 | Prompt authentication, CORS, response, CSP, and exact-route tests. |
+| `internal/mcp/server.go` | 692 | HTTP routes, JSON-RPC/MCP handling, dispatch, and tool schemas. |
 | `internal/mcp/server_test.go` | 95 | Route, download, authentication, initialize, and discovery tests. |
 | `internal/openai/client.go` | 258 | Bounded server-to-server OpenAI and Gemini API client. |
 | `internal/openai/client_test.go` | 101 | OpenAI/Gemini outbound request, response, and safe error tests. |
@@ -324,8 +324,8 @@ while still leaving no source-code section unexplained.
 | `scripts/mcp-token` | 52 | Root-only token retrieval and safe rotation. |
 | `web/index.html` | 200 | Public homepage and complete operator manual. |
 | `web/launch-banner.svg` | 21 | Accessible vector launch banner. |
-| `web/openai-test.html` | 34 | Credential-empty manual AI test form. |
-| `web/openai-test.js` | 37 | In-memory test request and response display. |
+| `web/openai-test.html` | 38 | Credential-empty, large-prompt manual AI test form. |
+| `web/openai-test.js` | 95 | Local credential persistence, clearing, request, and response display. |
 
 </details>
 
@@ -500,24 +500,24 @@ imports; 10–13 start a separate process group; 14–16 terminate that whole gr
 `internal/openai/client_test.go`: lines 1–43 verify the OpenAI request and parsed
 response; 44–58 verify sanitized upstream errors; 60–101 verify Gemini authentication, request limits, response text, model, provider, and usage.
 
-#### `internal/mcp/openai.go` — 194 lines
+#### `internal/mcp/openai.go` — 199 lines
 
 | Lines | Meaning |
 |---:|---|
 | 1–19 | Imports HTTP, JSON, URL, synchronization, and OpenAI client helpers. |
 | 20–44 | Implements a mutex-protected one-minute global request limiter. |
-| 45–73 | Serves the test HTML/JavaScript from the configured web root without caching. |
-| 74–158 | Handles `OPTIONS /openai/prompt` and `POST /openai/prompt`: CORS, both credentials, content type, one JSON object, prompt size, upstream call, generic errors, and safe response. |
-| 159–174 | Allows only exact configured origins or carefully checked wildcard origins. |
-| 175–191 | Parses wildcard origins and rejects suffix tricks such as `example.com.evil.test`. |
-| 192–194 | Logs only method/path/status/timing—not prompts or credentials. |
+| 45–78 | Serves `GET /test`, permanently redirects `GET /openai/test` to it, and serves the same-origin JavaScript without caching. |
+| 79–163 | Handles `OPTIONS /openai/prompt` and `POST /openai/prompt`: CORS, both credentials, content type, one JSON object, prompt size, upstream call, generic errors, and safe response. |
+| 164–179 | Allows only exact configured origins or carefully checked wildcard origins. |
+| 180–196 | Parses wildcard origins and rejects suffix tricks such as `example.com.evil.test`. |
+| 197–199 | Logs only method/path/status/timing—not prompts or credentials. |
 
 `internal/mcp/openai_test.go`: lines 1–40 build a fake upstream; 41–63 test
-authentication/response; 64–84 test CORS; 85–94 verify strict CSP.
+authentication/response; 64–84 test CORS; 85–108 verify `GET /test`, the legacy redirect, exact routing, and strict CSP.
 
 ### MCP and HTTP server
 
-#### `internal/mcp/server.go` — 691 lines
+#### `internal/mcp/server.go` — 692 lines
 
 | Lines | Meaning |
 |---:|---|
@@ -525,16 +525,16 @@ authentication/response; 64–84 test CORS; 85–94 verify strict CSP.
 | 24–36 | Declares release/protocol versions and the exact public download allowlist. |
 | 37–75 | Defines server state, JSON-RPC records, errors, and MCP tool metadata. |
 | 76–91 | Constructs workspace, file, search, command, Git, auth, selected OpenAI/Gemini provider, and limiter services from validated config. |
-| 92–107 | Registers exact routes so unknown paths never fall back to the homepage. |
-| 108–122 | Adds browser security headers and permits script only on the test page. |
-| 123–181 | Serves the homepage, root-scoped assets, allowlisted downloads, and nonsensitive health JSON. |
-| 182–235 | Enforces origin/method/body/JSON-RPC/protocol rules and handles initialize, ping, and discovery. |
-| 236–269 | Validates a tool call, dispatches it, logs metadata only, and returns bounded command details. |
-| 270–528 | Implements every tool’s small input record, feature switch, validation, and service call. |
-| 529–569 | Selects configured or safely detected build/test operations and rejects disabled categories. |
-| 570–648 | Writes responses, validates protocol headers/origins, negotiates MCP versions, and extracts safe log metadata. |
-| 649–685 | Publishes all composable tools and their JSON schemas. |
-| 686–691 | Finds the default homepage relative to the executable. |
+| 92–108 | Registers exact routes, including `/test` and the compatibility redirect; unknown paths never fall back to the homepage. |
+| 109–123 | Adds browser security headers and permits script only on `/test`. |
+| 124–182 | Serves the homepage, root-scoped assets, allowlisted downloads, and nonsensitive health JSON. |
+| 183–236 | Enforces origin/method/body/JSON-RPC/protocol rules and handles initialize, ping, and discovery. |
+| 237–270 | Validates a tool call, dispatches it, logs metadata only, and returns bounded command details. |
+| 271–529 | Implements every tool’s small input record, feature switch, validation, and service call. |
+| 530–570 | Selects configured or safely detected build/test operations and rejects disabled categories. |
+| 571–649 | Writes responses, validates protocol headers/origins, negotiates MCP versions, and extracts safe log metadata. |
+| 650–686 | Publishes all composable tools and their JSON schemas. |
+| 687–692 | Finds the default homepage relative to the executable. |
 
 `internal/mcp/server_test.go`: lines 1–30 build a test server; 31–60 test
 download allowlisting/exact routing; 61–79 test unauthorized access; 80–95 test
@@ -586,26 +586,27 @@ authenticated initialize and tool discovery.
 
 ### Browser code and visual assets
 
-#### `web/openai-test.js` — 37 lines
+#### `web/openai-test.js` — 95 lines
 
 | Lines | Meaning |
 |---:|---|
-| 1–7 | Creates a strict private scope and gets the form/button/status/output elements. |
-| 8–14 | Intercepts submit, disables the button, and shows progress timing. |
-| 15–24 | Sends JSON to `POST /openai/prompt` with values currently typed into the two headers and prompt field. |
-| 25–28 | Parses JSON, rejects non-success HTTP, and safely displays returned text/model/token/timing data with `textContent`. |
-| 29–35 | Displays a plain error and always re-enables the button. |
-| 36–37 | Closes the listener and private function scope. |
+| 1–15 | Creates a strict private scope, names the two local-storage entries, and gets the page elements. |
+| 16–20 | Updates the accessible request status without moving focus or scrolling. |
+| 21–34 | Restores a previously saved key and secret when browser storage is available. |
+| 35–44 | Saves both credentials only after a successful authenticated response. |
+| 45–56 | Implements the clear button and resets the visible credentials. |
+| 57–93 | Sends the prompt, handles JSON and HTTP failures, persists credentials after success, and safely renders text/model/token/timing data using `textContent`. |
+| 94–95 | Restores saved credentials at load and closes the private scope. |
 
-#### `web/openai-test.html` — 34 lines
+#### `web/openai-test.html` — 38 lines
 
 | Lines | Meaning |
 |---:|---|
-| 1–11 | Declares accessible HTML metadata and self-contained responsive styling. |
-| 12–17 | Introduces the authenticated test client and its in-memory credential behavior. |
-| 18–27 | Defines the key/secret inputs, editable bounded prompt, and send button; the secret field starts empty. |
-| 28–32 | Provides accessible status and plain-text response regions plus a homepage link. |
-| 33–34 | Loads the same-origin JavaScript with `defer` and closes the document. |
+| 1–11 | Declares accessible metadata and responsive styling, including a larger editor and disabled scroll anchoring. |
+| 12–17 | Introduces the authenticated test client and explains its trusted-device local-storage behavior. |
+| 18–31 | Defines the key/secret inputs, warning, empty prompt area, send button, and credential-clear button. |
+| 32–36 | Provides accessible status and plain-text response regions plus a homepage link. |
+| 37–38 | Loads the same-origin JavaScript with `defer` and closes the document. |
 
 #### `web/index.html` — 200 lines
 

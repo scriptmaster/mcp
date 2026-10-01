@@ -46,6 +46,11 @@ func (s *Server) openAITestPage(w http.ResponseWriter, r *http.Request) {
 	s.serveOpenAIAsset(w, r, "openai-test.html", "text/html; charset=utf-8")
 }
 
+func (s *Server) openAITestRedirect(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Cache-Control", "no-store")
+	http.Redirect(w, r, "/test", http.StatusPermanentRedirect)
+}
+
 func (s *Server) openAITestScript(w http.ResponseWriter, r *http.Request) {
 	s.serveOpenAIAsset(w, r, "openai-test.js", "text/javascript; charset=utf-8")
 }

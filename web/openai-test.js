@@ -1,15 +1,64 @@
 (() => {
   "use strict";
+  const storageKeys = Object.freeze({
+    apiKey: "mcp.prompt.apiKey",
+    apiSecret: "mcp.prompt.apiSecret"
+  });
   const form = document.getElementById("prompt-form");
   const send = document.getElementById("send");
+  const forget = document.getElementById("forget");
   const status = document.getElementById("status");
   const output = document.getElementById("response");
+  const apiKey = document.getElementById("api-key");
+  const apiSecret = document.getElementById("api-secret");
+  const prompt = document.getElementById("prompt");
+
+  const setStatus = (message, isError) => {
+    status.className = isError ? "meta error" : "meta";
+    status.textContent = message;
+  };
+
+  const restoreCredentials = () => {
+    try {
+      const savedKey = window.localStorage.getItem(storageKeys.apiKey);
+      const savedSecret = window.localStorage.getItem(storageKeys.apiSecret);
+      if (savedKey !== null) apiKey.value = savedKey;
+      if (savedSecret !== null) apiSecret.value = savedSecret;
+      if (savedKey !== null || savedSecret !== null) {
+        setStatus("Ready · saved credentials loaded.", false);
+      }
+    } catch (_error) {
+      setStatus("Ready · browser storage is unavailable.", false);
+    }
+  };
+
+  const saveCredentials = () => {
+    try {
+      window.localStorage.setItem(storageKeys.apiKey, apiKey.value.trim());
+      window.localStorage.setItem(storageKeys.apiSecret, apiSecret.value);
+      return true;
+    } catch (_error) {
+      return false;
+    }
+  };
+
+  forget.addEventListener("click", () => {
+    try {
+      window.localStorage.removeItem(storageKeys.apiKey);
+      window.localStorage.removeItem(storageKeys.apiSecret);
+    } catch (_error) {
+      // The fields are still cleared when browser storage is unavailable.
+    }
+    apiKey.value = "DevSpectra";
+    apiSecret.value = "";
+    setStatus("Saved credentials removed from this browser.", false);
+  });
 
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
     send.disabled = true;
-    status.className = "meta";
-    status.textContent = "Calling POST /openai/prompt…";
+    forget.disabled = true;
+    setStatus("Calling POST /openai/prompt…", false);
     output.textContent = "Waiting for the AI provider…";
     const started = performance.now();
     try {
@@ -17,21 +66,30 @@
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": document.getElementById("api-key").value,
-          "X-API-Secret": document.getElementById("api-secret").value
+          "X-API-Key": apiKey.value.trim(),
+          "X-API-Secret": apiSecret.value
         },
-        body: JSON.stringify({prompt: document.getElementById("prompt").value})
+        body: JSON.stringify({prompt: prompt.value})
       });
       const data = await response.json().catch(() => ({error: "The server returned non-JSON data."}));
-      if (!response.ok) throw new Error(data.error || `HTTP ${response.status}`);
+      if (!response.ok) throw new Error(data.error || "HTTP " + response.status);
+      const saved = saveCredentials();
       output.textContent = data.text || "(The AI provider returned an empty text output.)";
-      status.textContent = `Success · ${data.provider || "AI"} · ${data.model} · ${data.usage?.total_tokens ?? 0} tokens · ${Math.round(performance.now()-started)} ms browser round-trip`;
+      setStatus(
+        "Success · " + (data.provider || "AI") + " · " + data.model + " · " +
+        (data.usage?.total_tokens ?? 0) + " tokens · " +
+        Math.round(performance.now() - started) + " ms browser round-trip" +
+        (saved ? " · credentials saved" : " · credentials not saved"),
+        false
+      );
     } catch (error) {
-      status.className = "meta error";
-      status.textContent = `Failed: ${error.message}`;
+      setStatus("Failed: " + error.message, true);
       output.textContent = "No successful response.";
     } finally {
       send.disabled = false;
+      forget.disabled = false;
     }
   });
+
+  restoreCredentials();
 })();

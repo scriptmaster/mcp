@@ -166,25 +166,25 @@ runner, 16–28 prove timeout enforcement, and 29–38 prove output truncation.
 
 `internal/openai/client_test.go` has 101 lines: lines 1–43 verify OpenAI, lines 44–58 verify safe upstream errors, and lines 60–101 verify Gemini authentication, request limits, response parsing, model, provider, and usage.
 
-### `internal/mcp/openai.go` — 194 lines
+### `internal/mcp/openai.go` — 199 lines
 
 | Lines | Meaning |
 |---:|---|
 | 1–19 | Imports HTTP, JSON, URL, synchronization, and OpenAI client helpers. |
 | 20–44 | Implements a mutex-protected, one-minute global request limiter. |
-| 45–73 | Serves the owner test page and JavaScript from the configured web root without caching. |
-| 74–158 | Handles `OPTIONS /openai/prompt` and `POST /openai/prompt`: CORS, both credentials, content type, one JSON object, prompt size, upstream call, generic errors, and safe response. |
-| 159–174 | Allows only exact configured browser origins or carefully checked wildcard origins. |
-| 175–191 | Parses wildcard origins and prevents suffix tricks such as `example.com.evil.test`. |
-| 192–194 | Logs timing/status only—not prompts or secrets. |
+| 45–78 | Serves `GET /test`, permanently redirects `GET /openai/test` to it, and serves its JavaScript without caching. |
+| 79–163 | Handles `OPTIONS /openai/prompt` and `POST /openai/prompt`: CORS, both credentials, content type, one JSON object, prompt size, upstream call, generic errors, and safe response. |
+| 164–179 | Allows only exact configured browser origins or carefully checked wildcard origins. |
+| 180–196 | Parses wildcard origins and prevents suffix tricks such as `example.com.evil.test`. |
+| 197–199 | Logs timing/status only—not prompts or secrets. |
 
-`internal/mcp/openai_test.go` has 94 lines: lines 1–40 build a fake upstream,
+`internal/mcp/openai_test.go` has 108 lines: lines 1–40 build a fake upstream,
 41–63 test authentication and response shape, 64–84 test good/bad CORS origins,
-and 85–94 verify the strict browser Content Security Policy.
+and 85–108 verify `/test`, the legacy redirect, exact routing, and strict CSP.
 
 ## MCP HTTP server
 
-### `internal/mcp/server.go` — 691 lines
+### `internal/mcp/server.go` — 692 lines
 
 | Lines | Meaning |
 |---:|---|
@@ -192,16 +192,16 @@ and 85–94 verify the strict browser Content Security Policy.
 | 24–36 | Declares version/protocol and the exact public download allowlist. |
 | 37–75 | Defines server state, JSON-RPC request/response/error records, and MCP tool metadata. |
 | 76–91 | Constructs workspace, file, search, command, Git, auth, the selected OpenAI/Gemini provider, and rate-limit services from validated config. |
-| 92–107 | Registers exact routes; unknown paths are not treated as the homepage. |
-| 108–122 | Adds browser security headers and a stricter script policy outside the test page. |
-| 123–181 | Serves the homepage, root-scoped static assets, allowlisted downloads, and nonsensitive health JSON. |
-| 182–235 | Enforces origin, method, body size, strict JSON-RPC shape, protocol headers, and handles initialize/ping/tool discovery. |
-| 236–269 | Validates a tool call, dispatches it, logs only metadata, and returns bounded command details. |
-| 270–528 | Implements every tool’s small input schema, feature flag, validation, and call to the appropriate service. |
-| 529–569 | Selects configured or safely detected build/test operations and rejects disabled command categories. |
-| 570–648 | Writes JSON/RPC responses, checks origins/protocol headers, negotiates supported MCP revisions, and extracts safe log metadata. |
-| 649–685 | Publishes the complete list of composable MCP tools and their JSON input schemas. |
-| 686–691 | Resolves the default homepage path relative to the executable. |
+| 92–108 | Registers exact routes, including `/test` and the compatibility redirect; unknown paths are not treated as the homepage. |
+| 109–123 | Adds browser security headers and permits script only on `/test`. |
+| 124–182 | Serves the homepage, root-scoped static assets, allowlisted downloads, and nonsensitive health JSON. |
+| 183–236 | Enforces origin, method, body size, strict JSON-RPC shape, protocol headers, and handles initialize/ping/tool discovery. |
+| 237–270 | Validates a tool call, dispatches it, logs only metadata, and returns bounded command details. |
+| 271–529 | Implements every tool’s small input schema, feature flag, validation, and call to the appropriate service. |
+| 530–570 | Selects configured or safely detected build/test operations and rejects disabled command categories. |
+| 571–649 | Writes JSON/RPC responses, checks origins/protocol headers, negotiates supported MCP revisions, and extracts safe log metadata. |
+| 650–686 | Publishes the complete list of composable MCP tools and their JSON input schemas. |
+| 687–692 | Resolves the default homepage path relative to the executable. |
 
 `internal/mcp/server_test.go` has 95 lines: lines 1–30 build a test server,
 31–60 test download allowlisting and exact routing, 61–79 test unauthorized
@@ -214,7 +214,7 @@ access, and 80–95 test authenticated initialization plus tool discovery.
 | `web/index.html` | Public operator manual and project homepage; contains no secret. |
 | `web/launch-banner.svg` | Static banner shown on the homepage. |
 | `web/openai-test.html` | Owner-only manual test form; it does not contain credentials. |
-| `web/openai-test.js` | Keeps manually entered credentials in page memory and sends one request. Never prefill or bundle a production secret here. |
+| `web/openai-test.js` | Restores and saves owner-entered credentials in browser local storage after a successful request, provides a clear button, and sends one request. Never bundle a production secret here. |
 | `config.example.yaml` | Generic, secret-free configuration example. |
 | `docs/mcp.service` | Hardened systemd service template. |
 | `docs/nginx-mcp.conf` | HTTPS reverse-proxy template used by the live deployment. |

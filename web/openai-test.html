@@ -6,14 +6,14 @@
   <meta name="description" content="Test the authenticated MCP AI prompt endpoint">
   <title>AI Prompt Test · MCP</title>
   <style>
-    :root{color-scheme:dark;--bg:#070b18;--panel:#11182b;--line:#2a3658;--text:#eaf0ff;--muted:#aab6d2;--teal:#6ee7d8;--violet:#9d8cff;--bad:#ff9b9b}*{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(circle at 80% 0,#202060 0,transparent 28rem),var(--bg);color:var(--text);font:16px/1.55 system-ui,-apple-system,Segoe UI,sans-serif}main{width:min(900px,92vw);margin:auto;padding:46px 0 80px}header,.panel{border:1px solid var(--line);border-radius:22px;background:#11182be8;box-shadow:0 24px 70px #0007}header{padding:30px;margin-bottom:18px}h1{margin:.15rem 0;font-size:clamp(2rem,6vw,3.6rem);letter-spacing:-.04em}.eyebrow{color:var(--teal);font-weight:800;letter-spacing:.13em;text-transform:uppercase}.muted,.meta{color:var(--muted)}.panel{padding:26px}label{display:block;margin:17px 0 7px;font-weight:750}input,textarea,button{width:100%;font:inherit;border-radius:11px}input,textarea{border:1px solid var(--line);background:#060a14;color:var(--text);padding:12px}textarea{min-height:190px;resize:vertical}button{margin-top:18px;padding:13px;border:0;background:linear-gradient(90deg,var(--teal),var(--violet));color:#07101f;font-weight:900;cursor:pointer}button:disabled{opacity:.55;cursor:wait}pre{min-height:120px;white-space:pre-wrap;overflow-wrap:anywhere;background:#040710;border:1px solid var(--line);padding:16px;border-radius:12px}.error{color:var(--bad)}a{color:#9ddcff}.row{display:grid;grid-template-columns:1fr 2fr;gap:14px}@media(max-width:650px){.row{grid-template-columns:1fr}}
+    :root{color-scheme:dark;--bg:#070b18;--panel:#11182b;--line:#2a3658;--text:#eaf0ff;--muted:#aab6d2;--teal:#6ee7d8;--violet:#9d8cff;--bad:#ff9b9b}*{box-sizing:border-box}html{scroll-behavior:auto;overflow-anchor:none}body{margin:0;min-height:100vh;overflow-anchor:none;background:radial-gradient(circle at 80% 0,#202060 0,transparent 28rem),var(--bg);color:var(--text);font:16px/1.55 system-ui,-apple-system,Segoe UI,sans-serif}main{width:min(980px,92vw);margin:auto;padding:46px 0 80px}header,.panel{border:1px solid var(--line);border-radius:22px;background:#11182be8;box-shadow:0 24px 70px #0007}header{padding:30px;margin-bottom:18px}h1{margin:.15rem 0;font-size:clamp(2rem,6vw,3.6rem);letter-spacing:-.04em}.eyebrow{color:var(--teal);font-weight:800;letter-spacing:.13em;text-transform:uppercase}.muted,.meta{color:var(--muted)}.panel{padding:26px}.panel,form,#status,#response{overflow-anchor:none}label{display:block;margin:17px 0 7px;font-weight:750}input,textarea,button{width:100%;font:inherit;border-radius:11px}input,textarea{border:1px solid var(--line);background:#060a14;color:var(--text);padding:12px}textarea{height:min(52vh,560px);min-height:360px;resize:vertical;overflow-anchor:none;scroll-margin-block:20px}button{padding:13px;border:0;background:linear-gradient(90deg,var(--teal),var(--violet));color:#07101f;font-weight:900;cursor:pointer}button:disabled{opacity:.55;cursor:wait}.actions{display:flex;gap:12px;margin-top:18px}.actions button{width:auto;flex:1}.actions .secondary{border:1px solid var(--line);background:#1b2540;color:var(--text)}#status{min-height:1.55em}.storage-note{font-size:.92rem;color:var(--muted)}pre{min-height:120px;white-space:pre-wrap;overflow-wrap:anywhere;background:#040710;border:1px solid var(--line);padding:16px;border-radius:12px}.error{color:var(--bad)}a{color:#9ddcff}.row{display:grid;grid-template-columns:1fr 2fr;gap:14px}@media(max-width:650px){.row{grid-template-columns:1fr}.actions{flex-direction:column}.actions button{width:100%}textarea{height:52vh;min-height:320px}}
   </style>
 </head>
 <body><main>
   <header>
     <div class="eyebrow">MCP · authenticated test client</div>
     <h1>AI Prompt Test</h1>
-    <p class="muted">Calls <code>POST /openai/prompt</code>. Credentials remain in this page's memory only and are not saved to browser storage.</p>
+    <p class="muted">Calls <code>POST /openai/prompt</code>. After a successful request, this browser remembers both credentials in local storage.</p>
   </header>
   <section class="panel">
     <form id="prompt-form">
@@ -21,13 +21,17 @@
         <div><label for="api-key">X-API-Key</label><input id="api-key" name="api-key" value="DevSpectra" autocomplete="off" required></div>
         <div><label for="api-secret">X-API-Secret</label><input id="api-secret" name="api-secret" type="password" autocomplete="off" required></div>
       </div>
+      <p class="storage-note">Use only on a trusted device. Select “Forget saved credentials” before leaving a shared browser.</p>
       <label for="prompt">Prompt</label>
-      <textarea id="prompt" name="prompt" maxlength="16384" required>Reply with exactly: MCP AI integration OK</textarea>
-      <button id="send" type="submit">Send prompt</button>
+      <textarea id="prompt" name="prompt" maxlength="16384" placeholder="Enter a prompt…" required></textarea>
+      <div class="actions">
+        <button id="send" type="submit">Send prompt</button>
+        <button id="forget" class="secondary" type="button">Forget saved credentials</button>
+      </div>
     </form>
     <p id="status" class="meta" role="status">Ready.</p>
     <label for="response">Response</label>
-    <pre id="response" tabindex="0">No response yet.</pre>
+    <pre id="response">No response yet.</pre>
     <p><a href="/">← MCP operator manual</a></p>
   </section>
   <script src="/assets/openai-test.js" defer></script>

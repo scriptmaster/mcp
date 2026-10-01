@@ -82,13 +82,27 @@ func TestOpenAIPromptCORS(t *testing.T) {
 	}
 }
 
-func TestOpenAITestPageCSP(t *testing.T) {
+func TestAITestPageRouteCSPAndLegacyRedirect(t *testing.T) {
 	s, upstream := configuredOpenAIServer(t)
 	defer upstream.Close()
-	r := httptest.NewRequest(http.MethodGet, "/openai/test", nil)
+	r := httptest.NewRequest(http.MethodGet, "/test", nil)
 	w := httptest.NewRecorder()
 	s.Handler().ServeHTTP(w, r)
 	if w.Code != http.StatusOK || !strings.Contains(w.Header().Get("Content-Security-Policy"), "script-src 'self'") {
 		t.Fatalf("test page response = %d, CSP = %q", w.Code, w.Header().Get("Content-Security-Policy"))
+	}
+
+	r = httptest.NewRequest(http.MethodGet, "/openai/test", nil)
+	w = httptest.NewRecorder()
+	s.Handler().ServeHTTP(w, r)
+	if w.Code != http.StatusPermanentRedirect || w.Header().Get("Location") != "/test" {
+		t.Fatalf("legacy test redirect = %d, location = %q", w.Code, w.Header().Get("Location"))
+	}
+
+	r = httptest.NewRequest(http.MethodGet, "/test/", nil)
+	w = httptest.NewRecorder()
+	s.Handler().ServeHTTP(w, r)
+	if w.Code != http.StatusNotFound {
+		t.Fatalf("non-exact test route status = %d", w.Code)
 	}
 }

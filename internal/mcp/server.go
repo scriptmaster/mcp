@@ -21,7 +21,7 @@ import (
 	"mcpdev/internal/workspace"
 )
 
-const Version = "1.2.0"
+const Version = "1.2.1"
 const LatestProtocol = "2026-07-28"
 
 var downloadableFiles = map[string]struct{}{
@@ -95,7 +95,8 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /health", s.health)
 	mux.HandleFunc("GET /assets/launch-banner.svg", s.launchBanner)
 	mux.HandleFunc("GET /assets/openai-test.js", s.openAITestScript)
-	mux.HandleFunc("GET /openai/test", s.openAITestPage)
+	mux.HandleFunc("GET /test", s.openAITestPage)
+	mux.HandleFunc("GET /openai/test", s.openAITestRedirect)
 	mux.HandleFunc("OPTIONS /openai/prompt", s.handleOpenAIPrompt)
 	mux.HandleFunc("POST /openai/prompt", s.handleOpenAIPrompt)
 	mux.HandleFunc("GET /downloads/{filename}", s.download)
@@ -111,7 +112,7 @@ func securityHeaders(next http.Handler) http.Handler {
 		w.Header().Set("X-Frame-Options", "DENY")
 		w.Header().Set("Referrer-Policy", "no-referrer")
 		w.Header().Set("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
-		if r.URL.Path == "/openai/test" {
+		if r.URL.Path == "/test" {
 			w.Header().Set("Content-Security-Policy", "default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self'; img-src 'self' data:; object-src 'none'; base-uri 'none'; frame-ancestors 'none'")
 		} else {
 			w.Header().Set("Content-Security-Policy", "default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'none'; img-src 'self' data:; object-src 'none'; base-uri 'none'; frame-ancestors 'none'")
