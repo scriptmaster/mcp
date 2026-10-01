@@ -1,0 +1,69 @@
+server:
+  # Keep the Go process private. NGINX is the public HTTPS entry point.
+  listen: "127.0.0.1:8095"
+  public_url: "https://mcp.example.com"
+  homepage: "web/index.html"
+  # Browsers at these exact origins may call the MCP endpoint.
+  allowed_origins:
+    - "https://chatgpt.com"
+    - "https://chat.openai.com"
+    - "https://mcp.example.com"
+
+security:
+  # The real value comes from MCP_TOKEN in /etc/mcp/mcp.env.
+  token: "FROM_ENVIRONMENT"
+
+openai:
+  # Set false if you do not want POST /openai/prompt.
+  enabled: true
+  model: "gpt-6-luna"
+  # All three real values come from environment variables.
+  api_key: "FROM_ENVIRONMENT"
+  client_key: "FROM_ENVIRONMENT"
+  client_secret: "FROM_ENVIRONMENT"
+  # Prefer exact frontend origins. A wildcard trusts every matching subdomain.
+  allowed_origins:
+    - "https://mcp.example.com"
+    - "https://*.app.example.com"
+  max_prompt_bytes: 16384
+  max_output_tokens: 1200
+  timeout_seconds: 90
+  requests_per_minute: 30
+
+limits:
+  # Bounds protect memory, response size, and command runtime.
+  max_request_bytes: 2097152
+  max_read_bytes: 524288
+  max_write_bytes: 2097152
+  max_output_bytes: 524288
+  max_search_results: 200
+  command_timeout: 300
+
+commands:
+  # Turn whole tool categories on or off.
+  build: true
+  test: true
+  git: true
+  deploy: true
+  run: true
+
+workspaces:
+  # Only listed, enabled folders are visible to an MCP client.
+  - name: example
+    path: /srv/repositories/example
+    enabled: true
+    read_only: false
+    # These paths cannot be changed through file tools.
+    protected_paths:
+      - production
+    build:
+      command: ["go", "build", "./..."]
+      timeout: 300
+    test:
+      command: ["go", "test", "./..."]
+      timeout: 300
+    run_commands:
+      # A client asks for "format-check"; it cannot submit another command.
+      format-check:
+        command: ["gofmt", "-d", "."]
+        timeout: 120

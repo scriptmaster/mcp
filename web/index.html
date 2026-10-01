@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Operator manual for the Remote Development MCP Server">
+  <title>Remote Development MCP Server</title>
+  <style>
+    :root{color-scheme:dark;--bg:#070b18;--panel:#11182b;--line:#293454;--text:#e9eefc;--muted:#aab6d2;--teal:#6ee7d8;--violet:#9d8cff;--green:#5ee29b}
+    html{scroll-behavior:smooth;scroll-padding-top:20px}*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 80% 0,#202060 0,transparent 28rem),var(--bg);color:var(--text);font:16px/1.65 system-ui,-apple-system,Segoe UI,sans-serif}main{width:min(1120px,92vw);margin:auto;padding:56px 0 100px}header{position:relative;padding:54px;border:1px solid var(--line);border-radius:28px;background:linear-gradient(135deg,#111b38dd,#17214ddd 55%,#0d4f4add);box-shadow:0 30px 80px #0008}h1{font-size:clamp(2.5rem,7vw,5.7rem);line-height:.97;letter-spacing:-.055em;margin:.15em 0}.eyebrow{color:var(--teal);font-weight:800;letter-spacing:.16em;text-transform:uppercase}.lead{font-size:1.2rem;color:#d5def4;max-width:760px}h2{font-size:2rem;margin:60px 0 18px}h3{color:var(--teal);margin-top:32px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px}.card{padding:20px;border:1px solid var(--line);border-radius:16px;background:#11182bd9}.status{display:flex;align-items:center;gap:10px;color:var(--green);font-weight:800}.dot{width:10px;height:10px;background:var(--green);border-radius:50%;box-shadow:0 0 18px var(--green)}code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;background:#060a14;padding:.14rem .4rem;border-radius:5px;color:#c7fff7}pre{background:#040710;border:1px solid var(--line);border-radius:14px;padding:18px;overflow:auto;white-space:pre-wrap}pre code{padding:0;background:none;color:#dbe5ff}table{width:100%;border-collapse:collapse;background:#0d1426}th,td{text-align:left;vertical-align:top;padding:12px;border:1px solid var(--line)}th{color:var(--teal)}a{color:#9ddcff}.top-download{position:absolute;top:28px;right:28px;display:inline-flex;align-items:center;gap:8px;padding:11px 17px;border:1px solid #90fff0;border-radius:999px;background:#6ee7d8;color:#07152f;font-weight:800;text-decoration:none;box-shadow:0 10px 28px #0006;transition:transform .18s ease,box-shadow .18s ease}.top-download:hover{transform:translateY(-2px);box-shadow:0 14px 34px #0009}.download-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.download-card{position:relative;overflow:hidden;padding:28px;border:1px solid var(--line);border-radius:20px;background:linear-gradient(145deg,#141e38,#0d1426);text-align:center}.download-card:before{content:"";position:absolute;inset:0 0 auto;height:3px;background:linear-gradient(90deg,var(--violet),var(--teal))}.platform{font-size:1.4rem;font-weight:800;margin-bottom:5px}.arch{color:var(--muted);font-size:.9rem}.download-primary{display:block;margin:20px 0 10px;padding:12px 16px;border-radius:10px;background:var(--teal);color:#07152f;text-decoration:none;font-weight:850}.download-alt{font-size:.82rem;color:#9ddcff}.checksums{text-align:center;color:var(--muted);margin-top:18px}.workflow{font:700 1.08rem/1.9 ui-monospace,monospace;text-align:center;background:#101830;border:1px solid var(--line);padding:25px;border-radius:16px;color:#dbe5ff}.note{border-left:4px solid var(--violet);padding:14px 18px;background:#15152a}.danger{border-left-color:#ff9b9b}footer{margin-top:70px;color:var(--muted);font-size:.9rem}@media(max-width:760px){header{padding:72px 28px 32px}.top-download{top:18px;right:18px}.download-grid{grid-template-columns:1fr}th,td{display:block;width:100%}th{border-bottom:0}}
+  </style>
+</head>
+<body><main>
+  <header>
+    <a class="top-download" href="#download" aria-label="Scroll to downloads">Download ↓</a>
+    <div class="eyebrow">Production developer infrastructure</div>
+    <h1>Remote Development<br>MCP Server</h1>
+    <p class="lead">Allows an authorized AI client to securely search, read, modify, build, test and deploy configured source-code repositories on this server.</p>
+  </header>
+
+  <section id="download">
+    <h2>Download</h2>
+    <p>Production-ready standalone binaries for the current release. The primary download on each card is for Intel/AMD 64-bit systems; ARM64 builds are linked directly below.</p>
+    <div class="download-grid">
+      <article class="download-card">
+        <div class="platform">Windows</div>
+        <div class="arch">x86-64 · <code>.exe</code></div>
+        <a class="download-primary" href="/downloads/mcp-server-windows-amd64.exe" download>Download for Windows</a>
+        <a class="download-alt" href="/downloads/mcp-server-windows-arm64.exe" download>Windows ARM64</a>
+      </article>
+      <article class="download-card">
+        <div class="platform">Linux</div>
+        <div class="arch">x86-64 · static Go binary</div>
+        <a class="download-primary" href="/downloads/mcp-server-linux-amd64" download>Download for Linux</a>
+        <a class="download-alt" href="/downloads/mcp-server-linux-arm64" download>Linux ARM64</a>
+      </article>
+      <article class="download-card">
+        <div class="platform">macOS</div>
+        <div class="arch">Intel · standalone binary</div>
+        <a class="download-primary" href="/downloads/mcp-server-macos-amd64" download>Download for macOS</a>
+        <a class="download-alt" href="/downloads/mcp-server-macos-arm64" download>macOS Apple Silicon ARM64</a>
+      </article>
+    </div>
+    <p class="checksums"><a href="/downloads/SHA256SUMS" download>SHA-256 checksums</a> · Version <code>1.1.1</code></p>
+  </section>
+
+  <h2>Server Status</h2>
+  <div class="grid">
+    <div class="card"><div class="status"><span class="dot"></span>Service online</div><small>Live state: <a href="/health">health JSON</a></small></div>
+    <div class="card"><strong>MCP endpoint</strong><br><code>https://mcp.ai.msheriff.com/mcp</code></div>
+    <div class="card"><strong>Transport</strong><br>Stateless Streamable HTTP<br><small>MCP 2026-07-28 + 2025 compatibility</small></div>
+    <div class="card"><strong>Version</strong><br><code>1.1.1</code></div>
+    <div class="card"><strong>Authentication</strong><br>Bearer token required on every <code>/mcp</code> request</div>
+    <div class="card"><strong>Public endpoints</strong><br><code>GET /</code> documentation<br><code>GET /health</code> health<br><a href="/openai/test"><code>GET /openai/test</code></a></div>
+  </div>
+
+  <h2>OpenAI Prompt API</h2>
+  <div class="grid">
+    <div class="card"><strong>Endpoint</strong><br><code>POST /openai/prompt</code></div>
+    <div class="card"><strong>Client authentication</strong><br><code>X-API-Key</code> + <code>X-API-Secret</code></div>
+    <div class="card"><strong>Interactive check</strong><br><a href="/openai/test">Open the browser test client →</a></div>
+  </div>
+  <p>The endpoint validates the dedicated client credentials, sends the prompt through the server-side OpenAI Responses API integration, and returns response text and token usage. The upstream OpenAI key and client secret are never shown here or logged.</p>
+  <p class="note danger">Do not embed the shared secret in a public JavaScript bundle. Use a DevSpectra backend proxy for production; the browser page is an owner-operated manual test and does not save entered credentials.</p>
+
+  <h2>Available Capabilities</h2>
+  <table><thead><tr><th>Tool</th><th>Purpose</th></tr></thead><tbody>
+    <tr><td><code>workspace_list</code></td><td>List only configured and enabled workspaces.</td></tr>
+    <tr><td><code>tree</code></td><td>Explore a bounded tree without loading a whole repository.</td></tr>
+    <tr><td><code>file_find</code></td><td>Find filenames by substring or glob.</td></tr>
+    <tr><td><code>code_search</code></td><td>Ripgrep-powered content search with paths, line numbers, snippets and context.</td></tr>
+    <tr><td><code>read_file</code></td><td>Read complete small files or exact line ranges; returns SHA-256.</td></tr>
+    <tr><td><code>write_file</code></td><td>Create files; guarded replacement requires the current SHA-256.</td></tr>
+    <tr><td><code>apply_patch</code></td><td>Unique exact-text replacement with concise diff.</td></tr>
+    <tr><td><code>delete_file</code></td><td>Delete one regular file only with a matching SHA-256.</td></tr>
+    <tr><td><code>git_status</code>, <code>git_diff</code>, <code>git_log</code></td><td>Read-only repository inspection.</td></tr>
+    <tr><td><code>git_fetch</code>, <code>git_pull</code></td><td>Explicit remote synchronization; pull is fast-forward only.</td></tr>
+    <tr><td><code>git_add</code>, <code>git_commit</code></td><td>Explicit staging and commit creation.</td></tr>
+    <tr><td><code>git_push</code></td><td>Separate, explicit non-force push operation.</td></tr>
+    <tr><td><code>build</code>, <code>test</code></td><td>Configured or safely detected project operations.</td></tr>
+    <tr><td><code>run_command</code></td><td>Run a named, administrator-approved argv command; no arbitrary shell string.</td></tr>
+    <tr><td><code>deploy</code></td><td>Explicit workspace-specific configured deployment only.</td></tr>
+  </tbody></table>
+
+  <h2>Development Workflow</h2>
+  <div class="workflow">Search repository<br>↓<br>Read relevant files<br>↓<br>Modify / patch<br>↓<br>Review diff<br>↓<br>Build<br>↓<br>Test<br>↓<br>Commit<br>↓<br>Push<br>↓<br>Deploy</div>
+
+  <h2>Installation Layout</h2>
+  <pre><code>Source:     /var/www/mcp/
+Production: /var/www/mcp/production/
+Service:    mcp.service
+Domain:     mcp.ai.msheriff.com
+Config:     /var/www/mcp/production/config/config.yaml
+Secrets:    /etc/mcp/mcp.env</code></pre>
+
+  <h2>Connect to ChatGPT</h2>
+  <p>Current OpenAI guidance uses a custom MCP <strong>app</strong> in ChatGPT Web. Full read/write MCP is available in developer mode for Business and Enterprise/Edu workspaces; Pro availability can be limited to read/search. UI and plan availability can change.</p>
+  <ol>
+    <li>Have a workspace admin enable custom MCP development in <strong>Workspace Settings → Permissions &amp; Roles → Connected Data → Developer mode / Create custom MCP connectors</strong>.</li>
+    <li>Enable it for your account at <strong>Settings → Apps → Advanced Settings → Developer mode</strong> when that control is present.</li>
+    <li>As an admin/owner use <strong>Workspace Settings → Apps → Create</strong>; authorized users can use <strong>Settings → Apps → Create</strong>.</li>
+    <li>Name it <strong>Remote Development MCP</strong> and enter <code>https://mcp.ai.msheriff.com/mcp</code>.</li>
+    <li>Select the offered bearer/access-token authentication option and supply the token obtained by the administrator with <code>sudo /var/www/mcp/scripts/mcp-token get</code>. Never put the token in the URL. If your ChatGPT tenant offers only OAuth or no-auth, static bearer entry is not supported in that UI; use an MCP-compatible client that supports bearer headers or add an OAuth 2.1 authorization layer before connecting ChatGPT.</li>
+    <li>Choose <strong>Scan Tools</strong>, verify the tool list, then <strong>Create</strong>. The app appears with a <strong>Dev</strong> label under <strong>Settings → Apps → Enabled Apps</strong>.</li>
+    <li>Enable the required write actions in app action controls. Keep <code>delete_file</code>, <code>git_push</code> and <code>deploy</code> approval-gated.</li>
+    <li>Open a new chat, select the draft app from the tools menu (or mention it), and test with the prompts below.</li>
+  </ol>
+  <pre><code>List the workspaces available through my development MCP server.
+
+Search the &lt;workspace&gt; repository for LoginForm and show me the relevant files.
+
+Show git status and current diff. Do not modify anything.
+
+Run the project's tests and summarize any failures.</code></pre>
+  <p class="note">OpenAI's Responses API is another supported client path. Supply this server URL as <code>server_url</code> and pass the bearer value in the MCP tool's <code>authorization</code> field. Do not embed it in source code.</p>
+
+  <h2>Operations Cheat Sheet</h2>
+  <h3>Service and logs</h3>
+  <pre><code>systemctl status mcp
+systemctl restart mcp
+systemctl stop mcp
+systemctl start mcp
+systemctl is-enabled mcp
+
+journalctl -u mcp -f
+journalctl -u mcp --since today
+journalctl -u mcp -n 200 --no-pager</code></pre>
+  <h3>Rebuild and deploy</h3>
+  <pre><code>cd /var/www/mcp
+go test ./...
+make downloads
+cd dist &amp;&amp; sha256sum -c SHA256SUMS &amp;&amp; cd ..
+sudo /var/www/mcp/scripts/deploy.sh
+cat /var/www/mcp/production/VERSION</code></pre>
+  <p>The deployment script tests, builds all six downloadable binaries and their checksums, builds and validates the native service binary, atomically installs the release, restarts systemd, checks service state, and checks HTTPS health.</p>
+  <h3>NGINX and HTTPS</h3>
+  <pre><code>nginx -t
+systemctl reload nginx
+systemctl status nginx
+journalctl -u nginx --since today
+curl https://mcp.ai.msheriff.com/health
+curl -I http://mcp.ai.msheriff.com/</code></pre>
+  <h3>MCP connectivity</h3>
+  <pre><code>sudo /var/www/mcp/scripts/check-mcp.sh
+
+# A request without Authorization must return HTTP 401:
+curl -i https://mcp.ai.msheriff.com/mcp \
+  -H 'Content-Type: application/json' \
+  --data '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}'</code></pre>
+  <h3>Token management</h3>
+  <pre><code>sudo /var/www/mcp/scripts/mcp-token get
+sudo /var/www/mcp/scripts/mcp-token rotate</code></pre>
+  <p>Rotation immediately restarts <code>mcp.service</code>. Update every client afterward. The token is stored only in <code>/etc/mcp/mcp.env</code> with mode <code>0600</code>; it is never shown here.</p>
+  <h3>Add, disable, and configure a workspace</h3>
+  <pre><code>sudoedit /var/www/mcp/production/config/config.yaml
+
+# Add under workspaces:
+- name: myrepo
+  path: /var/www/myrepo
+  enabled: true
+  read_only: false
+  protected_paths: [production, .secrets]
+  build:
+    command: ["make", "build"]
+    timeout: 300
+  test:
+    command: ["make", "test"]
+    timeout: 300
+  deploy:
+    command: ["./deploy.sh"]
+    timeout: 600
+  run_commands:
+    lint:
+      command: ["make", "lint"]
+      timeout: 180
+
+# Disable without deleting configuration:
+enabled: false
+
+sudo systemctl restart mcp
+sudo journalctl -u mcp -n 50 --no-pager</code></pre>
+  <p>Grant the <code>mcp</code> service account only the repository permissions it needs. If a new workspace lives outside <code>/var/www/mcp</code>, also add its path to <code>ReadWritePaths=</code> in <code>/etc/systemd/system/mcp.service</code>, run <code>systemctl daemon-reload</code>, and restart.</p>
+
+  <h2>Troubleshooting</h2>
+  <h3>401 Unauthorized</h3><p>Retrieve the current token, update the client’s bearer credential, and ensure the header is exactly <code>Authorization: Bearer &lt;TOKEN&gt;</code>. A token rotation invalidates the old value immediately. Tokens never belong in URLs.</p>
+  <h3>502 Bad Gateway</h3><pre><code>systemctl status mcp
+journalctl -u mcp -n 100 --no-pager
+curl http://127.0.0.1:8095/health
+nginx -t</code></pre><p>A failed localhost health call means systemd/service trouble; a successful localhost call with an HTTPS 502 points to NGINX upstream configuration.</p>
+  <h3>Command timeout</h3><p>The response marks <code>timed_out</code> and returns bounded stdout/stderr. Raise the configured operation timeout deliberately, not globally, then restart the service.</p>
+  <h3>NGINX</h3><pre><code>nginx -T | sed -n '/server_name mcp.ai.msheriff.com/,/}/p'
+tail -n 100 /var/log/nginx/error.log
+certbot certificates</code></pre>
+  <h3>systemd</h3><pre><code>systemctl cat mcp
+systemctl show mcp -p User -p Group -p EnvironmentFiles
+systemctl reset-failed mcp
+systemctl restart mcp</code></pre>
+  <p class="note danger">Never enable arbitrary shell execution, force push, hard reset, branch deletion, or history rewriting. Git push and deployment remain separate explicit tools.</p>
+  <footer>Remote Development MCP Server · Streamable HTTP · Operator documentation contains no credentials.</footer>
+</main></body></html>

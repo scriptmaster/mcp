@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ENV_FILE=/etc/mcp/mcp.env
+
+if [[ ${EUID} -ne 0 ]]; then
+  echo "Run with sudo: sudo $0 {get|rotate}" >&2
+  exit 1
+fi
+
+case "${1:-}" in
+  get)
+    if [[ ! -r "$ENV_FILE" ]]; then
+      echo "Token file does not exist: $ENV_FILE" >&2
+      exit 1
+    fi
+    token=$(sed -n 's/^MCP_TOKEN=//p' "$ENV_FILE" | head -n 1)
+    if [[ -z "$token" ]]; then
+      echo "MCP_TOKEN is missing from $ENV_FILE" >&2
+      exit 1
+    fi
+    printf '%s\n' "$token"
+    ;;
+  rotate)
+    install -d -m 0700 /etc/mcp
+    umask 077
+    token=$(openssl rand -base64 48 | tr -d '\n')
+    tmp=$(mktemp /etc/mcp/mcp.env.XXXXXX)
+    trap 'rm -f "$tmp"' EXIT
+    # Preserve unrelated service settings such as OPENAI_API_KEY. Only replace
+    # the MCP_TOKEN assignment, and reject malformed duplicate assignments.
+    if [[ -f "$ENV_FILE" ]]; then
+      token_count=$(grep -c '^MCP_TOKEN=' "$ENV_FILE" || true)
+      if (( token_count > 1 )); then
+        echo "Refusing to rotate: multiple MCP_TOKEN entries in $ENV_FILE" >&2
+        exit 1
+      fi
+      grep -v '^MCP_TOKEN=' "$ENV_FILE" > "$tmp" || true
+    fi
+    printf 'MCP_TOKEN=%s\n' "$token" >> "$tmp"
+    chmod 0600 "$tmp"
+    mv "$tmp" "$ENV_FILE"
+    trap - EXIT
+    systemctl restart mcp
+    echo "MCP bearer token rotated and mcp.service restarted."
+    echo "Retrieve it with: sudo $0 get"
+    ;;
+  *)
+    echo "Usage: sudo $0 {get|rotate}" >&2
+    exit 2
+    ;;
+esac

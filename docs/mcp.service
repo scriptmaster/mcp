@@ -1,0 +1,44 @@
+[Unit]
+Description=Remote Development MCP Server
+Documentation=https://mcp.ai.msheriff.com
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=mcp
+Group=mcp
+WorkingDirectory=/var/www/mcp/production
+EnvironmentFile=/etc/mcp/mcp.env
+Environment=MCP_CONFIG=/var/www/mcp/production/config/config.yaml
+ExecStart=/var/www/mcp/production/mcp-server
+Restart=on-failure
+RestartSec=5s
+TimeoutStopSec=30s
+UMask=0027
+
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+ProtectClock=true
+RestrictSUIDSGID=true
+RestrictRealtime=true
+LockPersonality=true
+MemoryDenyWriteExecute=true
+RemoveIPC=true
+CapabilityBoundingSet=
+AmbientCapabilities=
+SystemCallArchitectures=native
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+ReadWritePaths=/var/www/mcp /tmp
+ReadOnlyPaths=/var/www/mcp/production /var/www/mcp/scripts
+InaccessiblePaths=/etc/shadow /etc/ssh /etc/letsencrypt /root
+
+[Install]
+WantedBy=multi-user.target

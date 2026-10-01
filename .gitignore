@@ -1,0 +1,15 @@
+/production/mcp-server
+/production/VERSION
+/production/downloads/
+/dist/
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+id_rsa
+id_ed25519
+coverage.out
+*.tmp
+*.test
+.coverage
