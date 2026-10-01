@@ -12,7 +12,7 @@ A production Go MCP server that gives an authenticated AI client bounded tools f
   <img alt="Go 1.26.8" src="https://img.shields.io/badge/Go-1.26.8-00ADD8?logo=go&logoColor=white">
   <img alt="MCP Streamable HTTP" src="https://img.shields.io/badge/MCP-Streamable_HTTP-7C3AED">
   <img alt="HTTPS live" src="https://img.shields.io/badge/HTTPS-Live-16A34A">
-  <img alt="Version 1.2.1" src="https://img.shields.io/badge/version-1.2.1-2563EB">
+  <img alt="Version 1.2.2" src="https://img.shields.io/badge/version-1.2.2-2563EB">
 </p>
 
 <p align="center">
@@ -93,7 +93,7 @@ Repository summary:
 
 - **45 tracked files:** 43 readable source/configuration/documentation files
   plus 2 real website screenshots.
-- **5,246 readable lines** at this revision.
+- **5,369 readable lines** at this revision.
 - Every executable Go, JavaScript, shell, build, service, proxy, and CI line is
   explained below by continuous line ranges.
 - Compiled binaries and real secrets are deliberately excluded from Git.
@@ -209,15 +209,18 @@ Command lists execute directly without a shell. A simple scalar such as `./deplo
 
 ## AI prompt API
 
-`POST /openai/prompt` validates the DevSpectra client headers and sends only the supplied prompt to the configured OpenAI or Gemini provider. It accepts:
+`POST /openai/prompt` validates the DevSpectra client headers, sends the optional `system_prompt` as higher-priority provider instructions, and sends `prompt` as the user correction request. It accepts:
 
 ```json
-{"prompt":"Reply with exactly: MCP AI integration OK"}
+{
+  "system_prompt": "Return exactly one valid JSON object without Markdown.",
+  "prompt": "Correct the current entry from 16:50–19:25: the actual end was 19:22."
+}
 ```
 
 Required headers are `Content-Type: application/json`, `X-API-Key`, and `X-API-Secret`. Successful responses contain `response_id`, `provider`, `model`, `text`, `request_id`, `usage`, and `duration_ms`. The API secret and selected upstream provider key are loaded only from `/etc/mcp/mcp.env`; neither is committed to source or shown on the public documentation page.
 
-The manual browser client at `GET /test` stores both entered credentials in that browser’s local storage after a successful request. It provides a clear button and is suitable only for an owner on a trusted device. `GET /openai/test` permanently redirects to `/test`, while `/test/` remains unmatched. A production browser bundle must not embed the shared secret because end users can extract browser-delivered credentials; DevSpectra should call `POST /openai/prompt` from its own backend whenever possible.
+The manual browser client at `GET /test` stores both entered credentials in that browser’s local storage after a successful request and saves the editable TimeApp system prompt immediately whenever it changes. It provides a clear button and is suitable only for an owner on a trusted device. `GET /openai/test` permanently redirects to `/test`, while `/test/` remains unmatched. A production browser bundle must not embed the shared secret because end users can extract browser-delivered credentials; DevSpectra should call `POST /openai/prompt` from its own backend whenever possible.
 
 When adding a repository, grant the `mcp` OS user only the required access and add the repository to `ReadWritePaths=` in the systemd unit. Then run:
 
@@ -267,7 +270,7 @@ Detection never runs package installation, CMake configuration, clean targets, o
 ## Repository size and every line explained
 
 This revision contains **45 tracked files**: **43 readable text files** and
-**2 PNG screenshots**, with **5,246 readable lines** in total.
+**2 PNG screenshots**, with **5,369 readable lines** in total.
 The counts below use the checked-in files, not generated binaries.
 
 “Every line explained” means every executable or configuration file is divided
@@ -285,7 +288,7 @@ while still leaving no source-code section unexplained.
 | `.github/workflows/ci.yml` | 36 | Tests, race detector, vet, vulnerability scan, and security scan. |
 | `.gitignore` | 15 | Prevents binaries, secrets, keys, and temporary output from entering Git. |
 | `Makefile` | 36 | Builds six operating-system/CPU binaries and SHA-256 checksums. |
-| `README.md` | 870 | The complete public landing page and operator/developer guide. |
+| `README.md` | 874 | The complete public landing page and operator/developer guide. |
 | `SECURITY.md` | 22 | Private vulnerability-reporting and operator-security policy. |
 | `cmd/server/main.go` | 61 | Program startup, logging, HTTP lifecycle, and graceful shutdown. |
 | `config.example.yaml` | 71 | Commented, secret-free configuration template. |
@@ -309,12 +312,12 @@ while still leaving no source-code section unexplained.
 | `internal/files/files_test.go` | 49 | Line-range and unique-patch tests. |
 | `internal/git/git.go` | 140 | Separate bounded Git operations without force/history rewriting. |
 | `internal/git/git_test.go` | 16 | Safe/unsafe Git reference tests. |
-| `internal/mcp/openai.go` | 199 | Authenticated prompt API, test-page routes, CORS, limits, and safe logging. |
-| `internal/mcp/openai_test.go` | 108 | Prompt authentication, CORS, response, CSP, and exact-route tests. |
+| `internal/mcp/openai.go` | 206 | Authenticated system/user prompt API, test-page routes, CORS, limits, and safe logging. |
+| `internal/mcp/openai_test.go` | 141 | Prompt authentication, system-prompt limits, provider payloads, CORS, CSP, and route tests. |
 | `internal/mcp/server.go` | 692 | HTTP routes, JSON-RPC/MCP handling, dispatch, and tool schemas. |
 | `internal/mcp/server_test.go` | 95 | Route, download, authentication, initialize, and discovery tests. |
-| `internal/openai/client.go` | 258 | Bounded server-to-server OpenAI and Gemini API client. |
-| `internal/openai/client_test.go` | 101 | OpenAI/Gemini outbound request, response, and safe error tests. |
+| `internal/openai/client.go` | 263 | Bounded OpenAI/Gemini client with separate provider system instructions. |
+| `internal/openai/client_test.go` | 109 | OpenAI/Gemini system instructions, requests, responses, and safe-error tests. |
 | `internal/search/search.go` | 324 | Tree, filename, ripgrep, and root-scoped fallback search. |
 | `internal/search/search_test.go` | 22 | Search-result-limit test. |
 | `internal/workspace/workspace.go` | 147 | Workspace allowlist, path validation, symlink checks, and protected names. |
@@ -324,8 +327,8 @@ while still leaving no source-code section unexplained.
 | `scripts/mcp-token` | 52 | Root-only token retrieval and safe rotation. |
 | `web/index.html` | 200 | Public homepage and complete operator manual. |
 | `web/launch-banner.svg` | 21 | Accessible vector launch banner. |
-| `web/openai-test.html` | 38 | Credential-empty, large-prompt manual AI test form. |
-| `web/openai-test.js` | 95 | Local credential persistence, clearing, request, and response display. |
+| `web/openai-test.html` | 91 | Credential-empty TimeApp system/correction prompt test form. |
+| `web/openai-test.js` | 108 | Local prompt/settings persistence, clearing, request, and response display. |
 
 </details>
 
@@ -488,32 +491,30 @@ imports; 10–13 start a separate process group; 14–16 terminate that whole gr
 
 ### AI provider bridge
 
-#### `internal/openai/client.go` — 258 lines
+#### `internal/openai/client.go` — 263 lines
 
 | Lines | Meaning |
 |---:|---|
-| 1–16 | Imports HTTP/JSON helpers and declares the fixed OpenAI and Gemini endpoints. |
-| 18–83 | Defines provider-neutral result, usage, and safe error data, plus timeout-enabled OpenAI/Gemini constructors with test endpoints. |
-| 85–166 | Selects the provider and implements bounded OpenAI Responses requests with `store: false`, bearer authentication, safe errors, text extraction, and usage. |
-| 168–258 | Implements bounded Gemini `generateContent` requests with `X-Goog-Api-Key`, safe errors, candidate text extraction, model/version reporting, and mapped usage. |
+| 1–17 | Imports HTTP/JSON helpers and declares the fixed OpenAI and Gemini endpoints. |
+| 18–84 | Defines provider-neutral result, usage, and safe error data, plus timeout-enabled OpenAI/Gemini constructors with test endpoints. |
+| 85–168 | Selects the provider and implements bounded OpenAI Responses requests with separate `instructions` and `input`, `store: false`, authentication, safe errors, text extraction, and usage. |
+| 169–263 | Implements bounded Gemini `generateContent` requests with separate `systemInstruction` and user content, API-key authentication, safe errors, text extraction, and mapped usage. |
 
-`internal/openai/client_test.go`: lines 1–43 verify the OpenAI request and parsed
-response; 44–58 verify sanitized upstream errors; 60–101 verify Gemini authentication, request limits, response text, model, provider, and usage.
+`internal/openai/client_test.go`: lines 1–43 verify OpenAI instructions, user input, authentication, and the parsed response; 44–59 verify sanitized upstream errors; 60–109 verify Gemini system instructions, user content, request limits, response text, model, provider, and usage.
 
-#### `internal/mcp/openai.go` — 199 lines
+#### `internal/mcp/openai.go` — 206 lines
 
 | Lines | Meaning |
 |---:|---|
 | 1–19 | Imports HTTP, JSON, URL, synchronization, and OpenAI client helpers. |
 | 20–44 | Implements a mutex-protected one-minute global request limiter. |
 | 45–78 | Serves `GET /test`, permanently redirects `GET /openai/test` to it, and serves the same-origin JavaScript without caching. |
-| 79–163 | Handles `OPTIONS /openai/prompt` and `POST /openai/prompt`: CORS, both credentials, content type, one JSON object, prompt size, upstream call, generic errors, and safe response. |
-| 164–179 | Allows only exact configured origins or carefully checked wildcard origins. |
-| 180–196 | Parses wildcard origins and rejects suffix tricks such as `example.com.evil.test`. |
-| 197–199 | Logs only method/path/status/timing—not prompts or credentials. |
+| 79–170 | Handles `OPTIONS /openai/prompt` and `POST /openai/prompt`: CORS, credentials, strict JSON, separate bounded system/user prompts, upstream call, generic errors, and safe response. |
+| 171–186 | Allows only exact configured origins or carefully checked wildcard origins. |
+| 187–203 | Parses wildcard origins and rejects suffix tricks such as `example.com.evil.test`. |
+| 204–206 | Logs only method/path/status/timing—not prompts or credentials. |
 
-`internal/mcp/openai_test.go`: lines 1–40 build a fake upstream; 41–63 test
-authentication/response; 64–84 test CORS; 85–108 verify `GET /test`, the legacy redirect, exact routing, and strict CSP.
+`internal/mcp/openai_test.go`: lines 1–51 build a validating fake upstream; 52–74 test authentication and separate system/user prompts; 75–96 test system-prompt limits; 97–117 test CORS; 118–141 verify `GET /test`, the legacy redirect, exact routing, and strict CSP.
 
 ### MCP and HTTP server
 
@@ -586,27 +587,30 @@ authenticated initialize and tool discovery.
 
 ### Browser code and visual assets
 
-#### `web/openai-test.js` — 95 lines
+#### `web/openai-test.js` — 108 lines
 
 | Lines | Meaning |
 |---:|---|
-| 1–15 | Creates a strict private scope, names the two local-storage entries, and gets the page elements. |
-| 16–20 | Updates the accessible request status without moving focus or scrolling. |
-| 21–34 | Restores a previously saved key and secret when browser storage is available. |
-| 35–44 | Saves both credentials only after a successful authenticated response. |
-| 45–56 | Implements the clear button and resets the visible credentials. |
-| 57–93 | Sends the prompt, handles JSON and HTTP failures, persists credentials after success, and safely renders text/model/token/timing data using `textContent`. |
-| 94–95 | Restores saved credentials at load and closes the private scope. |
+| 1–17 | Creates a strict private scope, names all three local-storage entries, and gets the page elements. |
+| 18–22 | Updates the accessible request status without moving focus or scrolling. |
+| 23–38 | Restores saved credentials and the edited system prompt when browser storage is available. |
+| 39–48 | Saves both credentials only after a successful authenticated response. |
+| 49–57 | Saves the system prompt immediately whenever the editor changes. |
+| 58–69 | Implements the credential-clear button without deleting the saved system prompt. |
+| 70–106 | Sends separate system/user prompts, handles failures, persists credentials after success, and safely renders text/model/token/timing data using `textContent`. |
+| 107–108 | Restores saved settings at load and closes the private scope. |
 
-#### `web/openai-test.html` — 38 lines
+#### `web/openai-test.html` — 91 lines
 
 | Lines | Meaning |
 |---:|---|
-| 1–11 | Declares accessible metadata and responsive styling, including a larger editor and disabled scroll anchoring. |
-| 12–17 | Introduces the authenticated test client and explains its trusted-device local-storage behavior. |
-| 18–31 | Defines the key/secret inputs, warning, empty prompt area, send button, and credential-clear button. |
-| 32–36 | Provides accessible status and plain-text response regions plus a homepage link. |
-| 37–38 | Loads the same-origin JavaScript with `defer` and closes the document. |
+| 1–11 | Declares accessible metadata and responsive styling, including two large editors and disabled scroll anchoring. |
+| 12–17 | Introduces the authenticated test client and explains its local-storage behavior. |
+| 18–24 | Defines the key/secret inputs and trusted-device warning. |
+| 25–77 | Provides the editable TimeApp system prompt, input example, rules, and valid output JSON examples. |
+| 78–84 | Provides the empty correction editor plus send and credential-clear buttons. |
+| 85–89 | Provides accessible status and plain-text response regions plus a homepage link. |
+| 90–91 | Loads the same-origin JavaScript with `defer` and closes the document. |
 
 #### `web/index.html` — 200 lines
 

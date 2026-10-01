@@ -41,7 +41,7 @@
         <a class="download-alt" href="/downloads/mcp-server-macos-arm64" download>macOS Apple Silicon ARM64</a>
       </article>
     </div>
-    <p class="checksums"><a href="/downloads/SHA256SUMS" download>SHA-256 checksums</a> · Version <code>1.2.1</code></p>
+    <p class="checksums"><a href="/downloads/SHA256SUMS" download>SHA-256 checksums</a> · Version <code>1.2.2</code></p>
   </section>
 
   <h2>Server Status</h2>
@@ -49,7 +49,7 @@
     <div class="card"><div class="status"><span class="dot"></span>Service online</div><small>Live state: <a href="/health">health JSON</a></small></div>
     <div class="card"><strong>MCP endpoint</strong><br><code>https://mcp.ai.msheriff.com/mcp</code></div>
     <div class="card"><strong>Transport</strong><br>Stateless Streamable HTTP<br><small>MCP 2026-07-28 + 2025 compatibility</small></div>
-    <div class="card"><strong>Version</strong><br><code>1.2.1</code></div>
+    <div class="card"><strong>Version</strong><br><code>1.2.2</code></div>
     <div class="card"><strong>Authentication</strong><br>Bearer token required on every <code>/mcp</code> request</div>
     <div class="card"><strong>Public endpoints</strong><br><code>GET /</code> documentation<br><code>GET /health</code> health<br><a href="/test"><code>GET /test</code></a></div>
   </div>
@@ -60,8 +60,8 @@
     <div class="card"><strong>Client authentication</strong><br><code>X-API-Key</code> + <code>X-API-Secret</code></div>
     <div class="card"><strong>Interactive check</strong><br><a href="/test">Open the browser test client →</a></div>
   </div>
-  <p>The endpoint validates the dedicated client credentials, sends the prompt through the configured server-side OpenAI or Gemini provider, and returns the provider, response text, and token usage. Upstream provider keys and the client secret are never shown here or logged.</p>
-  <p class="note danger">Do not embed the shared secret in a public JavaScript bundle. Use a DevSpectra backend proxy for production; the browser page is an owner-operated manual test that saves credentials in this browser’s local storage after a successful request and provides a clear button.</p>
+  <p>The endpoint validates the dedicated client credentials, sends <code>system_prompt</code> as provider-level instructions and <code>prompt</code> as user content through the configured server-side OpenAI or Gemini provider, and returns the provider, response text, and token usage. Upstream provider keys and the client secret are never shown here or logged.</p>
+  <p class="note danger">Do not embed the shared secret in a public JavaScript bundle. Use a DevSpectra backend proxy for production; the browser page is an owner-operated manual test that saves credentials after a successful request, saves the editable system prompt whenever it changes, and provides a credential-clear button.</p>
 
   <h2>Available Capabilities</h2>
   <table><thead><tr><th>Tool</th><th>Purpose</th></tr></thead><tbody>

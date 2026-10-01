@@ -111,11 +111,12 @@ func (s *Server) handleOpenAIPrompt(w http.ResponseWriter, r *http.Request) {
 		s.logOpenAIPrompt(r, started, http.StatusUnsupportedMediaType, false)
 		return
 	}
-	r.Body = http.MaxBytesReader(w, r.Body, s.cfg.OpenAI.MaxPromptBytes+1024)
+	r.Body = http.MaxBytesReader(w, r.Body, 2*s.cfg.OpenAI.MaxPromptBytes+2048)
 	dec := json.NewDecoder(r.Body)
 	dec.DisallowUnknownFields()
 	var request struct {
-		Prompt string `json:"prompt"`
+		SystemPrompt string `json:"system_prompt"`
+		Prompt       string `json:"prompt"`
 	}
 	if err := dec.Decode(&request); err != nil {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid JSON request"})
@@ -128,6 +129,7 @@ func (s *Server) handleOpenAIPrompt(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	request.Prompt = strings.TrimSpace(request.Prompt)
+	request.SystemPrompt = strings.TrimSpace(request.SystemPrompt)
 	if request.Prompt == "" {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "prompt is required"})
 		s.logOpenAIPrompt(r, started, http.StatusBadRequest, false)
@@ -138,9 +140,14 @@ func (s *Server) handleOpenAIPrompt(w http.ResponseWriter, r *http.Request) {
 		s.logOpenAIPrompt(r, started, http.StatusRequestEntityTooLarge, false)
 		return
 	}
+	if int64(len(request.SystemPrompt)) > s.cfg.OpenAI.MaxPromptBytes {
+		writeJSON(w, http.StatusRequestEntityTooLarge, map[string]string{"error": "system prompt is too large"})
+		s.logOpenAIPrompt(r, started, http.StatusRequestEntityTooLarge, false)
+		return
+	}
 
 	clientRequestID := fmt.Sprintf("mcp-%d", time.Now().UnixNano())
-	result, err := s.openAI.Prompt(r.Context(), request.Prompt, clientRequestID)
+	result, err := s.openAI.Prompt(r.Context(), request.SystemPrompt, request.Prompt, clientRequestID)
 	if err != nil {
 		status := http.StatusBadGateway
 		var apiErr *openaiservice.APIError

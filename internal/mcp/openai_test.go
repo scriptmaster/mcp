@@ -1,6 +1,7 @@
 package mcp
 
 import (
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -18,6 +19,16 @@ const testClientSecret = "11111111-1111-4111-8111-111111111111.22222222-2222-422
 func configuredOpenAIServer(t *testing.T) (*Server, *httptest.Server) {
 	t.Helper()
 	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var payload struct {
+			Instructions string `json:"instructions"`
+			Input        string `json:"input"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+			t.Fatal(err)
+		}
+		if payload.Instructions != "system rules" || payload.Input != "hello" {
+			t.Fatalf("unexpected upstream payload: %#v", payload)
+		}
 		w.Header().Set("Content-Type", "application/json")
 		w.Header().Set("X-Request-Id", "upstream-id")
 		_, _ = w.Write([]byte(`{"id":"resp_test","model":"test-model","output":[{"type":"message","content":[{"type":"output_text","text":"MCP OpenAI integration OK"}]}],"usage":{"input_tokens":7,"output_tokens":5,"total_tokens":12}}`))
@@ -50,7 +61,7 @@ func TestOpenAIPromptAuthenticationAndResponse(t *testing.T) {
 		t.Fatalf("unauthorized status = %d, body = %s", w.Code, w.Body.String())
 	}
 
-	r = httptest.NewRequest(http.MethodPost, "/openai/prompt", strings.NewReader(`{"prompt":"hello"}`))
+	r = httptest.NewRequest(http.MethodPost, "/openai/prompt", strings.NewReader(`{"system_prompt":"system rules","prompt":"hello"}`))
 	r.Header.Set("Content-Type", "application/json")
 	r.Header.Set("X-API-Key", "DevSpectra")
 	r.Header.Set("X-API-Secret", testClientSecret)
@@ -58,6 +69,28 @@ func TestOpenAIPromptAuthenticationAndResponse(t *testing.T) {
 	s.Handler().ServeHTTP(w, r)
 	if w.Code != http.StatusOK || !strings.Contains(w.Body.String(), "MCP OpenAI integration OK") {
 		t.Fatalf("authenticated response = %d, body = %s", w.Code, w.Body.String())
+	}
+}
+
+func TestOpenAIPromptRejectsOversizedSystemPrompt(t *testing.T) {
+	s, upstream := configuredOpenAIServer(t)
+	defer upstream.Close()
+
+	body, err := json.Marshal(map[string]string{
+		"system_prompt": strings.Repeat("s", 1025),
+		"prompt":        "hello",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	r := httptest.NewRequest(http.MethodPost, "/openai/prompt", strings.NewReader(string(body)))
+	r.Header.Set("Content-Type", "application/json")
+	r.Header.Set("X-API-Key", "DevSpectra")
+	r.Header.Set("X-API-Secret", testClientSecret)
+	w := httptest.NewRecorder()
+	s.Handler().ServeHTTP(w, r)
+	if w.Code != http.StatusRequestEntityTooLarge {
+		t.Fatalf("oversized system prompt status = %d, body = %s", w.Code, w.Body.String())
 	}
 }
 

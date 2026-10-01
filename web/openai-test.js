@@ -2,7 +2,8 @@
   "use strict";
   const storageKeys = Object.freeze({
     apiKey: "mcp.prompt.apiKey",
-    apiSecret: "mcp.prompt.apiSecret"
+    apiSecret: "mcp.prompt.apiSecret",
+    systemPrompt: "mcp.prompt.systemPrompt"
   });
   const form = document.getElementById("prompt-form");
   const send = document.getElementById("send");
@@ -12,20 +13,23 @@
   const apiKey = document.getElementById("api-key");
   const apiSecret = document.getElementById("api-secret");
   const prompt = document.getElementById("prompt");
+  const systemPrompt = document.getElementById("system-prompt");
 
   const setStatus = (message, isError) => {
     status.className = isError ? "meta error" : "meta";
     status.textContent = message;
   };
 
-  const restoreCredentials = () => {
+  const restoreSettings = () => {
     try {
       const savedKey = window.localStorage.getItem(storageKeys.apiKey);
       const savedSecret = window.localStorage.getItem(storageKeys.apiSecret);
+      const savedSystemPrompt = window.localStorage.getItem(storageKeys.systemPrompt);
       if (savedKey !== null) apiKey.value = savedKey;
       if (savedSecret !== null) apiSecret.value = savedSecret;
-      if (savedKey !== null || savedSecret !== null) {
-        setStatus("Ready · saved credentials loaded.", false);
+      if (savedSystemPrompt !== null) systemPrompt.value = savedSystemPrompt;
+      if (savedKey !== null || savedSecret !== null || savedSystemPrompt !== null) {
+        setStatus("Ready · saved settings loaded.", false);
       }
     } catch (_error) {
       setStatus("Ready · browser storage is unavailable.", false);
@@ -41,6 +45,15 @@
       return false;
     }
   };
+
+  systemPrompt.addEventListener("input", () => {
+    try {
+      window.localStorage.setItem(storageKeys.systemPrompt, systemPrompt.value);
+      setStatus("System prompt saved in this browser.", false);
+    } catch (_error) {
+      setStatus("System prompt changed, but browser storage is unavailable.", true);
+    }
+  });
 
   forget.addEventListener("click", () => {
     try {
@@ -69,7 +82,7 @@
           "X-API-Key": apiKey.value.trim(),
           "X-API-Secret": apiSecret.value
         },
-        body: JSON.stringify({prompt: prompt.value})
+        body: JSON.stringify({system_prompt: systemPrompt.value, prompt: prompt.value})
       });
       const data = await response.json().catch(() => ({error: "The server returned non-JSON data."}));
       if (!response.ok) throw new Error(data.error || "HTTP " + response.status);
@@ -91,5 +104,5 @@
     }
   });
 
-  restoreCredentials();
+  restoreSettings();
 })();

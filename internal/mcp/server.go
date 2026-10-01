@@ -21,7 +21,7 @@ import (
 	"mcpdev/internal/workspace"
 )
 
-const Version = "1.2.1"
+const Version = "1.2.2"
 const LatestProtocol = "2026-07-28"
 
 var downloadableFiles = map[string]struct{}{

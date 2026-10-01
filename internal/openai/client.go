@@ -82,20 +82,21 @@ func newClient(provider, apiKey, model string, maxOutputTokens int64, timeout ti
 	}
 }
 
-func (c *Client) Prompt(ctx context.Context, prompt, clientRequestID string) (*Result, error) {
+func (c *Client) Prompt(ctx context.Context, systemPrompt, prompt, clientRequestID string) (*Result, error) {
 	if c.provider == "gemini" {
-		return c.promptGemini(ctx, prompt)
+		return c.promptGemini(ctx, systemPrompt, prompt)
 	}
-	return c.promptOpenAI(ctx, prompt, clientRequestID)
+	return c.promptOpenAI(ctx, systemPrompt, prompt, clientRequestID)
 }
 
-func (c *Client) promptOpenAI(ctx context.Context, prompt, clientRequestID string) (*Result, error) {
+func (c *Client) promptOpenAI(ctx context.Context, systemPrompt, prompt, clientRequestID string) (*Result, error) {
 	payload := struct {
 		Model           string `json:"model"`
+		Instructions    string `json:"instructions,omitempty"`
 		Input           string `json:"input"`
 		Store           bool   `json:"store"`
 		MaxOutputTokens int64  `json:"max_output_tokens"`
-	}{Model: c.model, Input: prompt, Store: false, MaxOutputTokens: c.maxOutputTokens}
+	}{Model: c.model, Instructions: systemPrompt, Input: prompt, Store: false, MaxOutputTokens: c.maxOutputTokens}
 	body, err := json.Marshal(payload)
 	if err != nil {
 		return nil, fmt.Errorf("encode OpenAI request: %w", err)
@@ -165,20 +166,24 @@ func (c *Client) promptOpenAI(ctx context.Context, prompt, clientRequestID strin
 	}, nil
 }
 
-func (c *Client) promptGemini(ctx context.Context, prompt string) (*Result, error) {
+func (c *Client) promptGemini(ctx context.Context, systemPrompt, prompt string) (*Result, error) {
 	type part struct {
 		Text string `json:"text"`
 	}
 	type content struct {
-		Role  string `json:"role"`
+		Role  string `json:"role,omitempty"`
 		Parts []part `json:"parts"`
 	}
 	payload := struct {
-		Contents         []content `json:"contents"`
-		GenerationConfig struct {
+		Contents          []content `json:"contents"`
+		SystemInstruction *content  `json:"systemInstruction,omitempty"`
+		GenerationConfig  struct {
 			MaxOutputTokens int64 `json:"maxOutputTokens"`
 		} `json:"generationConfig"`
 	}{Contents: []content{{Role: "user", Parts: []part{{Text: prompt}}}}}
+	if strings.TrimSpace(systemPrompt) != "" {
+		payload.SystemInstruction = &content{Parts: []part{{Text: systemPrompt}}}
+	}
 	payload.GenerationConfig.MaxOutputTokens = c.maxOutputTokens
 	body, err := json.Marshal(payload)
 	if err != nil {
