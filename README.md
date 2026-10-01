@@ -2,6 +2,55 @@
 
 A production Go MCP server that gives an authenticated AI client bounded tools for exploring and operating configured source-code repositories on this VPS.
 
+<p align="center">
+  <strong>A production Go server that lets an authorized AI safely search, read,
+  edit, build, test, version, and deploy selected repositories.</strong>
+</p>
+
+<p align="center">
+  <a href="https://github.com/scriptmaster/mcp/actions/workflows/ci.yml"><img alt="Security and tests" src="https://github.com/scriptmaster/mcp/actions/workflows/ci.yml/badge.svg"></a>
+  <img alt="Go 1.26.8" src="https://img.shields.io/badge/Go-1.26.8-00ADD8?logo=go&logoColor=white">
+  <img alt="MCP Streamable HTTP" src="https://img.shields.io/badge/MCP-Streamable_HTTP-7C3AED">
+  <img alt="HTTPS live" src="https://img.shields.io/badge/HTTPS-Live-16A34A">
+  <img alt="Version 1.1.1" src="https://img.shields.io/badge/version-1.1.1-2563EB">
+</p>
+
+<p align="center">
+  <a href="https://mcp.ai.msheriff.com/"><strong>Live homepage</strong></a> ·
+  <a href="https://mcp.ai.msheriff.com/health">Health JSON</a> ·
+  <a href="https://mcp.ai.msheriff.com/openai/test">OpenAI test console</a> ·
+  <a href="docs/SECURITY_REVIEW.md">Security review</a>
+</p>
+
+<p align="center">
+  <a href="https://mcp.ai.msheriff.com/"><img src="docs/images/homepage.png" width="49%" alt="Remote Development MCP Server live homepage"></a>
+  <a href="https://mcp.ai.msheriff.com/openai/test"><img src="docs/images/openai-test.png" width="49%" alt="Authenticated OpenAI prompt test console"></a>
+</p>
+
+> [!IMPORTANT]
+> The pages above are public documentation and a credential-empty test form.
+> Repository tools and `POST /openai/prompt` remain authenticated. No bearer
+> token, OpenAI key, private repository, certificate key, or API secret is
+> stored in this public repository or visible in either screenshot.
+
+## Why this project is trustworthy
+
+| Evidence | What it means |
+|---|---|
+| [Live HTTPS health](https://mcp.ai.msheriff.com/health) | The production service publicly reports its health, version, uptime, and transport—never secrets. |
+| [Passing security workflow](https://github.com/scriptmaster/mcp/actions/workflows/ci.yml) | Every push and pull request runs race-enabled tests, `go vet`, `govulncheck`, and `gosec`; the workflow also runs weekly. |
+| [Published security review](docs/SECURITY_REVIEW.md) | Documents the checks performed, protections implemented, and remaining operator risks without pretending any software is infallible. |
+| Go 1.26.8 | The release is built with the patched toolchain verified by `govulncheck`. |
+| Dedicated Linux user | Production runs as unprivileged `mcp`, not root, with extensive systemd hardening. |
+| Bounded tools | There is no arbitrary shell-string endpoint; paths, command names, sizes, output, and timeouts are constrained. |
+| Server-side OpenAI key | The upstream key stays in a root-owned environment file and is never sent to browser code or written to logs. |
+| Reproducible deployment | Tests, build, atomic installation, systemd restart, HTTPS health check, and rollback are automated. |
+
+The latest publication checks passed: all Go tests and race checks, `go vet`,
+`govulncheck` with **no known reachable vulnerabilities**, `gosec` with
+**zero unreviewed findings**, shell syntax validation, a redacted live-secret
+comparison, and an HTTPS production health check.
+
 ## Start here
 
 This repository is the readable source for the service running at
@@ -17,17 +66,37 @@ If you are new to Go, read these in order:
    risks that an operator still needs to manage.
 3. `config.example.yaml` — the settings you copy and adapt for your server.
 
+The same complete explanation is now also embedded in
+[this README](#repository-size-and-every-line-explained), so LinkedIn and
+GitHub visitors do not need to leave the main page.
+
+In plain English, this server gives an approved AI client a carefully limited
+toolbox for selected source-code folders. The client can discover relevant
+files without loading an entire repository, make targeted changes, review the
+diff, run builds/tests, and perform separately authorized Git or deployment
+operations. A second authenticated endpoint provides a small server-side
+OpenAI Responses API bridge for frontends that cannot call OpenAI directly.
+
 Clone it with:
 
 ```bash
-git clone https://github.com/fs-sheriff/remote-development-mcp.git
-cd remote-development-mcp
+git clone https://github.com/scriptmaster/mcp.git
+cd mcp
 go test ./...
 ```
 
 Compiled binaries and real secrets are deliberately not stored in GitHub.
 The GitHub repository is public, but the running MCP and OpenAI endpoints remain
 authenticated.
+
+Repository summary:
+
+- **45 tracked files:** 43 readable source/configuration/documentation files
+  plus 2 real website screenshots.
+- **4,973 readable lines** at this revision.
+- Every executable Go, JavaScript, shell, build, service, proxy, and CI line is
+  explained below by continuous line ranges.
+- Compiled binaries and real secrets are deliberately excluded from Git.
 
 Production URLs:
 
@@ -193,6 +262,436 @@ Every command result contains `stdout`, `stderr`, `exit_code`, `duration_ms`, ti
 - `CMakeLists.txt`: uses an existing `build` directory for builds; otherwise requires explicit configuration
 
 Detection never runs package installation, CMake configuration, clean targets, or destructive commands.
+
+## Repository size and every line explained
+
+This revision contains **45 tracked files**: **43 readable text files** and
+**2 PNG screenshots**, with **4,973 readable lines** in total.
+The counts below use the checked-in files, not generated binaries.
+
+“Every line explained” means every executable or configuration file is divided
+into continuous line ranges below. Together, the ranges cover the whole file,
+including package declarations, imports, comments, blank lines, and closing
+braces. This is more readable than repeating 4,000+ individual one-line notes,
+while still leaving no source-code section unexplained.
+
+<details>
+<summary><strong>Complete file list and exact line counts</strong></summary>
+
+| File | Lines | Simple purpose |
+|---|---:|---|
+| `.github/dependabot.yml` | 10 | Weekly Go-module and GitHub Actions update checks. |
+| `.github/workflows/ci.yml` | 36 | Tests, race detector, vet, vulnerability scan, and security scan. |
+| `.gitignore` | 15 | Prevents binaries, secrets, keys, and temporary output from entering Git. |
+| `Makefile` | 36 | Builds six operating-system/CPU binaries and SHA-256 checksums. |
+| `README.md` | 868 | The complete public landing page and operator/developer guide. |
+| `SECURITY.md` | 22 | Private vulnerability-reporting and operator-security policy. |
+| `cmd/server/main.go` | 61 | Program startup, logging, HTTP lifecycle, and graceful shutdown. |
+| `config.example.yaml` | 69 | Commented, secret-free configuration template. |
+| `docs/CODE_WALKTHROUGH.md` | 245 | Standalone copy of the beginner code guide. |
+| `docs/SECURITY_REVIEW.md` | 126 | Audit evidence, protections, limitations, and residual risks. |
+| `docs/certbot.example.sh` | 8 | Minimal safe certificate-command example. |
+| `docs/images/homepage.png` | binary | Real 1440×1000 live-homepage screenshot. |
+| `docs/images/openai-test.png` | binary | Real 1440×1000 credential-empty test-page screenshot. |
+| `docs/mcp.service` | 44 | Hardened systemd service definition. |
+| `docs/nginx-mcp.conf` | 42 | HTTPS reverse proxy and streaming configuration. |
+| `go.mod` | 5 | Module name, patched Go version, and direct dependency. |
+| `go.sum` | 4 | Cryptographic dependency checksums. |
+| `internal/auth/auth.go` | 54 | Constant-time bearer and API key/secret authentication. |
+| `internal/auth/auth_test.go` | 51 | Authentication success/failure tests. |
+| `internal/command/command.go` | 200 | Bounded, timeout-controlled configured-command execution. |
+| `internal/command/command_test.go` | 38 | Timeout and output-limit tests. |
+| `internal/command/process_unix.go` | 16 | Unix process-group setup and termination. |
+| `internal/command/process_windows.go` | 11 | Windows process termination implementation. |
+| `internal/config/config.go` | 260 | Strict YAML parsing, defaults, environment secrets, and validation. |
+| `internal/files/files.go` | 285 | Safe partial reads, guarded writes, patches, deletes, hashes, and diffs. |
+| `internal/files/files_test.go` | 49 | Line-range and unique-patch tests. |
+| `internal/git/git.go` | 140 | Separate bounded Git operations without force/history rewriting. |
+| `internal/git/git_test.go` | 16 | Safe/unsafe Git reference tests. |
+| `internal/mcp/openai.go` | 194 | Authenticated `POST /openai/prompt`, CORS, limits, and safe logging. |
+| `internal/mcp/openai_test.go` | 94 | OpenAI endpoint authentication, CORS, response, and CSP tests. |
+| `internal/mcp/server.go` | 687 | HTTP routes, JSON-RPC/MCP handling, dispatch, and tool schemas. |
+| `internal/mcp/server_test.go` | 95 | Route, download, authentication, initialize, and discovery tests. |
+| `internal/openai/client.go` | 135 | Bounded server-to-server OpenAI Responses API client. |
+| `internal/openai/client_test.go` | 58 | Outbound request, response, and safe error tests. |
+| `internal/search/search.go` | 324 | Tree, filename, ripgrep, and root-scoped fallback search. |
+| `internal/search/search_test.go` | 22 | Search-result-limit test. |
+| `internal/workspace/workspace.go` | 147 | Workspace allowlist, path validation, symlink checks, and protected names. |
+| `internal/workspace/workspace_test.go` | 39 | Traversal, absolute-path, symlink, and disabled-workspace tests. |
+| `scripts/check-mcp.sh` | 25 | Authenticated initialize and tool-discovery smoke test. |
+| `scripts/deploy.sh` | 98 | Test, build, atomic deploy, restart, health check, and rollback. |
+| `scripts/mcp-token` | 52 | Root-only token retrieval and safe rotation. |
+| `web/index.html` | 200 | Public homepage and complete operator manual. |
+| `web/launch-banner.svg` | 21 | Accessible vector launch banner. |
+| `web/openai-test.html` | 34 | Credential-empty manual OpenAI test form. |
+| `web/openai-test.js` | 37 | In-memory test request and response display. |
+
+</details>
+
+<details>
+<summary><strong>Open the complete beginner-friendly line explanation</strong></summary>
+
+### How a request travels
+
+```text
+internet → NGINX HTTPS → Go HTTP router → authentication
+         → workspace/path checks → small service → JSON response
+```
+
+The program is split into small packages with one responsibility each. That
+makes security rules easier to understand, review, and test.
+
+### Program entry point
+
+#### `cmd/server/main.go` — 61 lines
+
+| Lines | Meaning |
+|---:|---|
+| 1–17 | Declares the executable and imports logging, HTTP, signals, config, and server packages. |
+| 18–55 | `main` handles `-version`, loads configuration, starts HTTP, listens for shutdown signals, and shuts down gracefully. |
+| 56–61 | `envOr` reads an environment variable or returns a safe default. |
+
+### Authentication
+
+#### `internal/auth/auth.go` — 54 lines
+
+| Lines | Meaning |
+|---:|---|
+| 1–9 | Imports SHA-256, constant-time comparison, HTTP, and string helpers. |
+| 10–22 | Stores the MCP token and validates `Authorization: Bearer …`. |
+| 23–35 | Protects a route and returns HTTP 401 without explaining which token detail failed. |
+| 36–49 | Stores and validates the separate `X-API-Key` and `X-API-Secret`. |
+| 50–54 | Hashes both compared values before constant-time comparison, avoiding length-based timing leaks. |
+
+`internal/auth/auth_test.go`: lines 1–30 test valid/invalid bearer tokens;
+lines 31–51 prove both OpenAI client headers must match.
+
+### Configuration
+
+#### `internal/config/config.go` — 260 lines
+
+| Lines | Meaning |
+|---:|---|
+| 1–13 | Imports YAML, filesystem, validation, string, and time helpers. |
+| 14–81 | Defines every YAML section: server, security, OpenAI, limits, tool switches, workspaces, and operations. |
+| 82–103 | Parses a command as a simple string or, preferably, an explicit argument list. |
+| 104–172 | Loads strict YAML, substitutes environment secrets, checks token length, validates workspace names/paths, rejects duplicates, and validates operations. |
+| 173–218 | Loads OpenAI settings from environment variables and supplies bounded defaults. |
+| 219–231 | Rejects an empty executable, negative timeout, or absolute command working directory. |
+| 232–260 | Supplies localhost and conservative request/read/write/output/search/timeout defaults. |
+
+#### `config.example.yaml` — 69 lines
+
+| Lines | Meaning |
+|---:|---|
+| 1–11 | Private localhost listener, public URL, homepage, and allowed MCP browser origins. |
+| 12–15 | MCP token placeholder; the real token comes from the protected environment file. |
+| 16–32 | Optional OpenAI model, environment-secret placeholders, browser origins, and prompt/output/time/rate limits. |
+| 33–41 | Global request, file, output, search, and command bounds. |
+| 42–49 | Administrator switches for build, test, Git, deploy, and named commands. |
+| 50–69 | One example workspace, protected path, safe build/test argv, and one named format check. |
+
+### Workspace boundary
+
+#### `internal/workspace/workspace.go` — 147 lines
+
+| Lines | Meaning |
+|---:|---|
+| 1–15 | Imports helpers and declares clear “escape” and “protected” errors. |
+| 16–54 | Keeps only enabled workspaces, lists them predictably, and looks them up by name. |
+| 55–91 | Rejects read-only writes, absolute paths, `..`, protected locations, and resolved paths outside the workspace. |
+| 92–114 | Resolves existing symlinks while allowing a nonexistent final component for a new file. |
+| 115–119 | Confirms that the resolved path remains beneath the configured root. |
+| 120–137 | Blocks writes to Git internals, env files, keys, certificates, and administrator-protected areas. |
+| 138–147 | Blocks reads of common credential and secret filenames. |
+
+`internal/workspace/workspace_test.go`: lines 1–28 test normal paths,
+traversal, absolute paths, and symlink escapes; lines 29–39 test disabled
+workspaces and the small boolean helper.
+
+### File operations
+
+#### `internal/files/files.go` — 285 lines
+
+| Lines | Meaning |
+|---:|---|
+| 1–37 | Imports helpers and defines compact read/change response records. |
+| 38–89 | Reads only regular, non-binary, size-bounded files; selects requested lines and returns SHA-256. |
+| 90–133 | Creates a file or overwrites only when the caller supplies the current SHA-256; writes atomically. |
+| 134–170 | Applies one exact unique text replacement and rejects stale hashes or ambiguous matches. |
+| 171–199 | Deletes only a regular file whose current SHA-256 matches the request. |
+| 200–231 | Writes to a temporary file, flushes it, and renames it atomically so partial content is never exposed. |
+| 232–278 | Calculates hashes and creates a concise, size-capped diff. |
+| 279–285 | Copies only up to the configured byte limit and reports truncation. |
+
+`internal/files/files_test.go`: lines 1–19 create an isolated service;
+20–33 test partial reads; 34–49 test a successful patch and rejection of an
+ambiguous patch.
+
+### Search
+
+#### `internal/search/search.go` — 324 lines
+
+| Lines | Meaning |
+|---:|---|
+| 1–37 | Imports helpers and defines compact tree/search result records. |
+| 38–114 | Walks a bounded tree and skips dependency, Git, hidden, and protected paths. |
+| 115–164 | Finds filenames by substring or glob with workspace protections. |
+| 165–185 | Validates search inputs and selects ripgrep when installed. |
+| 186–252 | Runs ripgrep without a shell, with timeout, JSON parsing, result limits, and protected-path filtering. |
+| 253–307 | Supplies a slower Go fallback using root-scoped file handles to prevent symlink escape while opening results. |
+| 308–315 | Converts internal absolute paths to safe workspace-relative output. |
+| 316–324 | Applies default and administrator-set result limits. |
+
+`internal/search/search_test.go` lines 1–22 prove that results stop at the
+configured maximum.
+
+### Controlled command execution
+
+#### `internal/command/command.go` — 200 lines
+
+| Lines | Meaning |
+|---:|---|
+| 1–20 | Imports process, timing, JSON, synchronization, and workspace helpers. |
+| 21–38 | Defines runner limits and every command result field returned to the client. |
+| 39–105 | Validates the working directory, clamps timeout, runs configured argv without a shell, bounds output, terminates on timeout, and records exit/duration details. |
+| 106–144 | Detects Go, npm, Make, .NET, and CMake without inventing destructive setup commands. |
+| 145–167 | Gives child processes a minimal environment and safely checks npm script names. |
+| 168–200 | Implements a thread-safe buffer that accepts all process output but stores only the configured maximum. |
+
+`internal/command/process_unix.go`: lines 1–9 select the Unix build and
+imports; 10–13 start a separate process group; 14–16 terminate that whole group.
+
+`internal/command/process_windows.go`: lines 1–6 select Windows/imports;
+7–8 need no setup; 9–11 kill the Windows process.
+
+`internal/command/command_test.go`: lines 1–15 build a temporary runner;
+16–28 prove timeout enforcement; 29–38 prove output truncation.
+
+### Git
+
+#### `internal/git/git.go` — 140 lines
+
+| Lines | Meaning |
+|---:|---|
+| 1–20 | Allows conservative remote/branch characters and rejects option-like `-` or force-like `+` prefixes. |
+| 21–41 | Defines the service, status, and path-scoped diff. |
+| 42–65 | Caps history and implements fetch/prune with validated remotes. |
+| 66–82 | Implements only fast-forward pulls. |
+| 83–98 | Stages targeted validated paths and deliberately rejects broad `.`. |
+| 99–108 | Requires a nonempty, bounded commit message. |
+| 109–127 | Performs normal push or set-upstream; no force option exists. |
+| 128–140 | Sends Git argv through the same bounded command runner. |
+
+`internal/git/git_test.go` lines 1–16 test allowed and rejected references.
+
+### OpenAI bridge
+
+#### `internal/openai/client.go` — 135 lines
+
+| Lines | Meaning |
+|---:|---|
+| 1–13 | Imports HTTP, JSON, context, bytes, strings, and time helpers. |
+| 14–47 | Fixes the official Responses endpoint and defines private client state, result/usage fields, and sanitized upstream errors. |
+| 48–61 | Creates a timeout-enabled client; tests may substitute a fake endpoint. |
+| 62–135 | Sends model/input with `store: false`, bearer auth, and a request ID; caps response bodies, parses safe errors, extracts output text, and returns usage. |
+
+`internal/openai/client_test.go`: lines 1–43 verify the request and parsed
+response; 44–58 verify sanitized upstream error handling.
+
+#### `internal/mcp/openai.go` — 194 lines
+
+| Lines | Meaning |
+|---:|---|
+| 1–19 | Imports HTTP, JSON, URL, synchronization, and OpenAI client helpers. |
+| 20–44 | Implements a mutex-protected one-minute global request limiter. |
+| 45–73 | Serves the test HTML/JavaScript from the configured web root without caching. |
+| 74–158 | Handles `OPTIONS /openai/prompt` and `POST /openai/prompt`: CORS, both credentials, content type, one JSON object, prompt size, upstream call, generic errors, and safe response. |
+| 159–174 | Allows only exact configured origins or carefully checked wildcard origins. |
+| 175–191 | Parses wildcard origins and rejects suffix tricks such as `example.com.evil.test`. |
+| 192–194 | Logs only method/path/status/timing—not prompts or credentials. |
+
+`internal/mcp/openai_test.go`: lines 1–40 build a fake upstream; 41–63 test
+authentication/response; 64–84 test CORS; 85–94 verify strict CSP.
+
+### MCP and HTTP server
+
+#### `internal/mcp/server.go` — 687 lines
+
+| Lines | Meaning |
+|---:|---|
+| 1–23 | Imports all smaller services used by the HTTP/MCP layer. |
+| 24–36 | Declares release/protocol versions and the exact public download allowlist. |
+| 37–75 | Defines server state, JSON-RPC records, errors, and MCP tool metadata. |
+| 76–87 | Constructs workspace, file, search, command, Git, auth, OpenAI, and limiter services from validated config. |
+| 88–103 | Registers exact routes so unknown paths never fall back to the homepage. |
+| 104–118 | Adds browser security headers and permits script only on the test page. |
+| 119–177 | Serves the homepage, root-scoped assets, allowlisted downloads, and nonsensitive health JSON. |
+| 178–231 | Enforces origin/method/body/JSON-RPC/protocol rules and handles initialize, ping, and discovery. |
+| 232–265 | Validates a tool call, dispatches it, logs metadata only, and returns bounded command details. |
+| 266–524 | Implements every tool's small input record, feature switch, validation, and service call. |
+| 525–565 | Selects configured or safely detected build/test operations and rejects disabled categories. |
+| 566–644 | Writes responses, validates protocol headers/origins, negotiates MCP versions, and extracts safe log metadata. |
+| 645–681 | Publishes all composable tools and their JSON schemas. |
+| 682–687 | Finds the default homepage relative to the executable. |
+
+`internal/mcp/server_test.go`: lines 1–30 build a test server; 31–60 test
+download allowlisting/exact routing; 61–79 test unauthorized access; 80–95 test
+authenticated initialize and tool discovery.
+
+### Shell and build automation
+
+#### `scripts/check-mcp.sh` — 25 lines
+
+| Lines | Meaning |
+|---:|---|
+| 1–3 | Selects Bash and enables exit-on-error, unset-variable, and pipeline failure safety. |
+| 4–12 | Selects the URL and gets a token from the environment or root-readable env file. |
+| 13–19 | Sends an authenticated MCP initialize request. |
+| 20–25 | Sends authenticated tool discovery. |
+
+#### `scripts/deploy.sh` — 98 lines
+
+| Lines | Meaning |
+|---:|---|
+| 1–8 | Enables strict Bash and names source, production, service, and health targets. |
+| 9–18 | Requires root and takes a nonblocking deployment lock. |
+| 19–27 | Creates temporary files and guarantees cleanup. |
+| 28–40 | Runs tests, builds six downloads, builds the production binary, and validates its version. |
+| 41–55 | Installs web/download files through temporary names. |
+| 56–68 | Keeps rollback binary, atomically installs the new executable, and atomically writes VERSION. |
+| 69–77 | Restarts systemd and restores the rollback binary if restart fails. |
+| 78–81 | Confirms systemd is active and prints concise status. |
+| 82–96 | Retries the public HTTPS health check and fails if no healthy response arrives. |
+| 97–98 | Removes rollback only after success and prints the deployed version. |
+
+#### `scripts/mcp-token` — 52 lines
+
+| Lines | Meaning |
+|---:|---|
+| 1–10 | Enables strict Bash, fixes the protected env path, and requires root. |
+| 11–23 | `get` checks the file and prints only the MCP token for an administrator. |
+| 24–47 | `rotate` generates strong randomness, rejects duplicate token entries, preserves every unrelated env setting, atomically replaces the file at mode 0600, and restarts MCP. |
+| 48–52 | Rejects unsupported arguments and prints usage. |
+
+#### `Makefile` — 36 lines
+
+| Lines | Meaning |
+|---:|---|
+| 1–5 | Defines overridable Go command, output folder, package, and reproducible flags. |
+| 6–10 | Declares non-file targets, builds every platform, and generates checksums. |
+| 11–34 | Builds Windows, Linux, and macOS for amd64 and arm64 without CGO. |
+| 35–36 | Runs every Go test package. |
+
+### Browser code and visual assets
+
+#### `web/openai-test.js` — 37 lines
+
+| Lines | Meaning |
+|---:|---|
+| 1–7 | Creates a strict private scope and gets the form/button/status/output elements. |
+| 8–14 | Intercepts submit, disables the button, and shows progress timing. |
+| 15–24 | Sends JSON to `POST /openai/prompt` with values currently typed into the two headers and prompt field. |
+| 25–28 | Parses JSON, rejects non-success HTTP, and safely displays returned text/model/token/timing data with `textContent`. |
+| 29–35 | Displays a plain error and always re-enables the button. |
+| 36–37 | Closes the listener and private function scope. |
+
+#### `web/openai-test.html` — 34 lines
+
+| Lines | Meaning |
+|---:|---|
+| 1–11 | Declares accessible HTML metadata and self-contained responsive styling. |
+| 12–17 | Introduces the authenticated test client and its in-memory credential behavior. |
+| 18–27 | Defines the key/secret inputs, editable bounded prompt, and send button; the secret field starts empty. |
+| 28–32 | Provides accessible status and plain-text response regions plus a homepage link. |
+| 33–34 | Loads the same-origin JavaScript with `defer` and closes the document. |
+
+#### `web/index.html` — 200 lines
+
+| Lines | Meaning |
+|---:|---|
+| 1–16 | Declares the public document, responsive theme, typography, cards, links, code blocks, and layout. |
+| 17–46 | Presents the project hero and six checksum-verifiable download buttons. |
+| 47–56 | Shows endpoint, protocol, release, authentication, and health status. |
+| 57–65 | Explains the authenticated OpenAI API and links to the test console. |
+| 66–84 | Lists all file, search, Git, build, test, command, and deploy capabilities. |
+| 85–95 | Shows the development flow and installation layout. |
+| 96–116 | Documents current ChatGPT connection steps and safe example prompts. |
+| 117–183 | Provides copyable service, logs, deploy, NGINX, HTTPS, token, connectivity, and workspace commands. |
+| 184–199 | Explains 401, 502, timeout, NGINX, and systemd troubleshooting. |
+| 200 | Closes the page. |
+
+#### `web/launch-banner.svg` — 21 lines
+
+| Lines | Meaning |
+|---:|---|
+| 1–3 | Declares an accessible 1200×420 SVG with title and description. |
+| 4–8 | Defines the background/glow gradients and blur. |
+| 9–16 | Draws the background, glow, connected paths, and code-network nodes. |
+| 17–20 | Draws the launch status, project name, and public-domain text. |
+| 21 | Closes the SVG. |
+
+### Production configuration
+
+#### `docs/mcp.service` — 44 lines
+
+| Lines | Meaning |
+|---:|---|
+| 1–6 | Names the service and waits for networking. |
+| 7–18 | Runs the production binary as dedicated `mcp`, loads protected environment/config, restarts on failure, and uses restrictive new-file permissions. |
+| 19–38 | Removes privilege/capability/device/kernel/realtime attack surface and limits network families. |
+| 39–42 | Grants only required write/read locations and makes secrets, SSH, certificates, and root home inaccessible. |
+| 43–44 | Enables normal multi-user boot startup. |
+
+#### `docs/nginx-mcp.conf` — 42 lines
+
+| Lines | Meaning |
+|---:|---|
+| 1–7 | Redirects all HTTP requests to the same HTTPS host/path/query. |
+| 8–17 | Opens HTTPS/HTTP2 and selects the existing Let's Encrypt certificate and hardened TLS options. |
+| 18–23 | Limits request size and adds HSTS, MIME-sniff, framing, and referrer protections. |
+| 24–34 | Proxies only to localhost and forwards host/client/protocol/authentication headers. |
+| 35–42 | Disables buffering/cache for MCP compatibility and sets long bounded streaming timeouts. |
+
+`docs/certbot.example.sh`: lines 1–3 enable strict Bash; line 4 requires a
+domain argument; lines 5–7 explain that existing certificate automation must be
+preserved; line 8 asks Certbot to add HTTPS and redirect HTTP.
+
+### CI and repository controls
+
+#### `.github/workflows/ci.yml` — 36 lines
+
+| Lines | Meaning |
+|---:|---|
+| 1–9 | Names the workflow and runs it on main pushes, pull requests, and Monday schedules. |
+| 10–12 | Grants read-only repository contents permission. |
+| 13–17 | Creates one Ubuntu job with a 20-minute ceiling. |
+| 18–24 | Uses immutable action commit hashes to check out source and install the Go version from `go.mod`. |
+| 25–28 | Runs race-enabled tests and `go vet`. |
+| 29–32 | Installs a pinned `govulncheck` and rejects reachable known vulnerabilities. |
+| 33–36 | Installs pinned `gosec` and rejects unreviewed security patterns. |
+
+`.github/dependabot.yml`: lines 1–2 select schema and updates; lines 3–6
+check Go modules weekly; lines 7–10 check GitHub Actions weekly.
+
+`.gitignore`: lines 1–4 exclude production/download binaries; lines 5–11
+exclude environment files, private/certificate keys, and coverage; lines 12–15
+exclude temporary/test/coverage output.
+
+`go.mod`: lines 1–3 name the module and require patched Go 1.26.8; lines 4–5
+pin the YAML dependency. `go.sum` lines 1–4 contain checksums that let Go
+detect changed dependency downloads.
+
+### Documentation-only files
+
+`README.md` is this complete landing page and operator guide.
+`SECURITY.md` explains private reporting and operator responsibility.
+`docs/SECURITY_REVIEW.md` preserves audit evidence and honest residual risks.
+`docs/CODE_WALKTHROUGH.md` keeps the code explanation available as a focused
+standalone document. The two PNG files are real captures of the live public
+pages and contain no secret.
+
+</details>
 
 ## Build and test
 
